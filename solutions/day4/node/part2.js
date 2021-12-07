@@ -78,13 +78,13 @@ const startingPosition = finalBoard * ROW_LENGTH * COL_LENGTH;
 const endingPosition = (1 + finalBoard) * ROW_LENGTH * COL_LENGTH;
 for (var p = startingPosition; p < endingPosition; p++) {
     if (bingoPositionsCalled.has(p)) {
-        process.stdout.write(`*${bingoBoardsArr[p].toString().padStart(2)}* `)
+        // process.stdout.write(`*${bingoBoardsArr[p].toString().padStart(2)}* `)
     } else {
         unmarkedSum += bingoBoardsArr[p]
-        process.stdout.write(` ${bingoBoardsArr[p].toString().padStart(2)}  `)
+        // process.stdout.write(` ${bingoBoardsArr[p].toString().padStart(2)}  `)
     }
-    if (p % 5 == 4) console.log()
+    // if (p % 5 == 4) console.log()
 }
-console.log(`sum = ${unmarkedSum}`)
-console.log(`last called = ${finalCall} on call ${callIndex}`)
+// console.log(`sum = ${unmarkedSum}`)
+// console.log(`last called = ${finalCall} on call ${callIndex}`)
 console.log(`answer = ${finalCall * unmarkedSum}`)
