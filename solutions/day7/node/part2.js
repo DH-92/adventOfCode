@@ -39,6 +39,4 @@ while (true) {
     guessOutput=oneBackward
 }
 
-
 console.log(`final guess ${guess} resulted in ${guessOutput}`);
-process.exit();
