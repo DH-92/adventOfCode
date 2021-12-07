@@ -25,18 +25,24 @@ function getFuelForGuess(guess) {
 var guess = median;
 var guessOutput = getFuelForGuess(guess);
 var direction = 1;
+var steps = Math.floor(Math.sqrt(initialState.length)-1);
 while (true) {
-    const oneForward = getFuelForGuess(guess + direction)
+    const oneForward = getFuelForGuess(guess + (direction*steps))
     if (oneForward < guessOutput) {
-        guess+=direction
+        guess+=(direction*steps)
         guessOutput=oneForward
         continue
     }
-    const oneBackward = getFuelForGuess(guess - direction)
-    if (oneBackward >= guessOutput) break
-    direction = direction*-1
-    guess+=direction
-    guessOutput=oneBackward
+    const oneBackward = getFuelForGuess(guess - (direction*steps))
+    if (oneBackward < guessOutput) {
+        direction = direction*-1
+        guess+=(direction*steps)
+        guessOutput = oneBackward
+        continue
+    } else {
+        if (steps == 1) break
+        steps=Math.floor(steps/2)
+    }
 }
 
 console.log(`final guess ${guess} resulted in ${guessOutput}`);
