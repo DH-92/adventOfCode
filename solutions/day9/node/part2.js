@@ -1,37 +1,68 @@
 const fs = require('fs')
+class Node {
+    constructor(row, col, h) {
+        this.row = row
+        this.col = col
+        this.h = h
+        this.next = null
+        this.id = `${row},${col}`
+    }
 
-const QUESTION_FILE = "day9.txt" //question (100 x 100 grid)
-const EXAMPLE_FILE = "9e.txt" //example  ( 10 x   5 grid)
+    get tail() {
+        if (this.h === 9) return "9"
+        if (this.next) return this.next.tail
+        return this.id
+    }
+}
 
 function parseLine(line, row) {
-    const lineArray = [...line]
-    lineArray.forEach((h, col) => {
-        h = parseInt(h)
-        if (!Array.isArray(nodes[row])) nodes[row] = []
-        if (!Array.isArray(lowPoints[row])) lowPoints[row] = []
-        nodes[row][col] = h
-        let lowPoint = true
-        if (col !== 0) {
-            if (h < nodes[row][col - 1]) {
-                lowPoints[row][col - 1] = '>' // '>'
-                lowPoints[row][col] = h
-            } else lowPoints[row][col] = '<'
-        }
-        if (row !== 0) {
-            if (h < nodes[row - 1][col]) {
-                lowPoints[row - 1][col] = 'v' // 'v'
-                lowPoints[row][col] = h
-            } else lowPoints[row][col] = '^'
-        }
-    })
+    [...line].map(char => { return parseInt(char) })
+        .forEach((h, col) => {
+            if (!Array.isArray(nodes[row])) nodes[row] = []
+            nodes[row][col] = new Node(row, col, h)
+            const currNode = nodes[row][col]
+
+            if (row !== 0) {
+                const nodeAbove = nodes[row - 1][col]
+                if (currNode.h < nodeAbove.h) {
+                    nodeAbove.next = currNode
+                } else {
+                    currNode.next = nodeAbove
+                }
+            }
+
+            if (col !== 0) {
+                const nodeToTheLeft = nodes[row][col - 1]
+                if (currNode.h < nodeToTheLeft.h) {
+                    nodeToTheLeft.next = currNode
+                } else {
+                    currNode.next = nodeToTheLeft
+                }
+            }
+
+        })
 }
 
 function generateOutput() {
-    const flattenedLowPoints = [].concat(...lowPoints)
-    return flattenedLowPoints.reduce((acc, val) => {
-        if (Number.isInteger(val)) acc += val + 1
-        return acc
-    }, 0)
+    const basins = []
+    for (node of [].concat(...nodes)) {
+        const bottomOfBasin = node.tail
+        if (bottomOfBasin === "9") continue;
+        if (basins[bottomOfBasin]) {
+            basins[bottomOfBasin]++
+        } else {
+            basins[bottomOfBasin] = 1
+        }
+    }
+
+    const basinSizes = []
+    for (key in basins) {
+        const v = basins[key]
+        basinSizes.push(v)
+    }
+    const sortedBasins =
+        basinSizes.sort((a, b) => { return b - a })
+    return (sortedBasins[0] * sortedBasins[1] * sortedBasins[2])
 }
 
 function solveInput(inputFile) {
@@ -40,18 +71,24 @@ function solveInput(inputFile) {
         .split('\n')    //split by line
         .filter(x => { return x.length != 0 })  //don't want empty lines
         .map(parseLine) //pass the input line by line to "solveLine"
-    output = generateOutput(lowPoints)
+    output = generateOutput()
 }
 
-let output = 0
-let nodes = []
-let lowPoints = []
+const QUESTION_FILE = "day9.txt" //question (100 x 100 grid)
+const EXAMPLE_FILE = "9e.txt" //example  ( 10 x   5 grid)
+
+let output
+let nodes
+let lowPoints
+
+output = 0
+nodes = []
+lowPoints = []
 solveInput(EXAMPLE_FILE)
-console.log(lowPoints)
 console.log(`example output :${output}`)
 
-// nodes = []
-// lowPoints = []
-// output = 0
-// solveInput(QUESTION_FILE)
-// console.log(`final output :${output}`)
+nodes = []
+lowPoints = []
+output = 0
+solveInput(QUESTION_FILE)
+console.log(`final output :${output}`)
