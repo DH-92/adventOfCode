@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const INITIAL_STATE_FILE = "day6.txt"
+const INITIAL_STATE_FILE = "input.txt"
 
 const TURN_COUNT = 80
 const BREED_PERIOD = 7

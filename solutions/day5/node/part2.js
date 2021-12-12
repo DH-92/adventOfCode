@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const LINE_DATA_PATH = "day5.txt";
+const LINE_DATA_PATH = "input.txt";
 const x_LENGTH = 1000;
 
 const warn = new Set;

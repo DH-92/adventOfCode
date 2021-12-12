@@ -1,7 +1,7 @@
 const fs = require('fs')
 
-const INITIAL_STATE_FILE = "day8.txt" //question
-// const INITIAL_STATE_FILE = "day8e.txt" //example
+const INITIAL_STATE_FILE = "input.txt" //question
+// const INITIAL_STATE_FILE = "example.txt" //example
 
 const wordsByLength = new Array(10).fill(0)
 

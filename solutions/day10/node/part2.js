@@ -95,8 +95,8 @@ function solveInput(inputFile) {
     output = generateOutput()
 }
 
-const QUESTION_FILE = "day9.txt" //question (100 x 100 grid)
-const EXAMPLE_FILE = "9e.txt" //example  ( 10 x   5 grid)
+const QUESTION_FILE = "input.txt" //question (100 x 100 grid)
+const EXAMPLE_FILE = "example.txt" //example  ( 10 x   5 grid)
 
 let output
 let nodes

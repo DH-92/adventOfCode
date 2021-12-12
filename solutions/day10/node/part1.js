@@ -1,7 +1,7 @@
 const fs = require('fs')
 
-const QUESTION_FILE = "day10.txt" //question (100 x 100 grid)
-const EXAMPLE_FILE = "10e.txt" //example  ( 10 x   5 grid)
+const QUESTION_FILE = "input.txt" //question (100 x 100 grid)
+const EXAMPLE_FILE = "exammple.txt" //example  ( 10 x   5 grid)
 
 class Stack {
     constructor() {

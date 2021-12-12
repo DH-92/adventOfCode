@@ -1,7 +1,7 @@
 const fs = require('fs')
 
-const QUESTION_FILE = "day8.txt" //question
-const EXAMPLE_FILE = "day8e.txt" //example
+const QUESTION_FILE = "input.txt" //question
+const EXAMPLE_FILE = "example.txt" //example
 
 function wordsByLength(line) {
     return line

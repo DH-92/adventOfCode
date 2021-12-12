@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const INITIAL_STATE_FILE = "day7.txt"
+const INITIAL_STATE_FILE = "input.txt"
 
 const initialState =
     fs.readFileSync(INITIAL_STATE_FILE)
