@@ -2,7 +2,6 @@ const fs = require('fs')
 
 const QUESTION_FILE = "input.txt"
 const EXAMPLE_FILE = "example.txt"
-
 //energy levels from 0 to 9
 
 function flashNode(state, rowIndex, colIndex) {

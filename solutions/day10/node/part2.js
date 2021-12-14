@@ -1,5 +1,4 @@
 const fs = require('fs')
-const crypto = require('crypto')
 class Node {
     constructor(h) {
         this.h = h
@@ -50,18 +49,6 @@ function parseLine(line, row) {
 }
 
 function generateOutput() {
-    // const basins = []
-    // nodes.flat()
-    //     .map(node => {
-    //     const bottomOfBasin = node.tail
-    //     if (bottomOfBasin !== "9") {
-    //         basins[bottomOfBasin] =
-    //             (basins[bottomOfBasin])
-    //                 ? basins[bottomOfBasin]+=1
-    //                 : 1
-    //     }
-    // })
-
     const basins =
         nodes.flat()
             .reduce((basins, node) => {
@@ -87,6 +74,9 @@ function generateOutput() {
 }
 
 function solveInput(inputFile) {
+    output = 0
+    nodes = []
+    lowPoints = []
     fs.readFileSync(inputFile)
         .toString()     //input is text
         .split('\n')    //split by line
@@ -102,14 +92,8 @@ let output
 let nodes
 let lowPoints
 
-output = 0
-nodes = []
-lowPoints = []
 solveInput(EXAMPLE_FILE)
 console.log(`example output :${output}`)
 
-nodes = []
-lowPoints = []
-output = 0
 solveInput(QUESTION_FILE)
 console.log(`final output :${output}`)

@@ -56,11 +56,8 @@ function segmentsByValue(wordsByLength) {
 }
 
 function solveLine(line) {
-
-    const wordsLookup = wordsByLength(line)
-        
+    const wordsLookup = wordsByLength(line)      
     const segmentsLookup = segmentsByValue(wordsLookup)
-
     const lineOutput =
         line.split('|')[1]
             .split(' ')
