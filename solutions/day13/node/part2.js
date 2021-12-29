@@ -4,7 +4,7 @@ const QUESTION_FILE = "./input.txt"
 const EXAMPLE_FILE = "./example.txt"
 
 function solveInput(inputFile) {
-    let folds =
+    const folds =
         fs.readFileSync(inputFile)
             .toString()     //input is text
             .split('\n')    //split by line
@@ -19,17 +19,18 @@ function solveInput(inputFile) {
                 }
                 return ans
             }, { 'x': [], 'y': [] })
+    
     const MIN_X = folds['x'][folds['x'].length -1]
     const MIN_Y = folds['y'][folds['y'].length -1]
-    const touchedNodes = Array.from(Array(MIN_Y), () => new Array(MIN_X).fill(''))
-    const nodes =
+    
+    const touchedNodes = 
         fs.readFileSync(inputFile)
             .toString()     //input is text
             .split('\n')    //split by line
             .filter(line => line.length != 0)  //don't want empty lines
             .filter(line => !line.includes(' '))
             .map(line => line.split(','))
-            .map(pair => {
+            .reduce((acc,pair) => {
                 let x = pair[0]
                 let y = pair[1]
                 for (yFold of folds['y']) {
@@ -38,8 +39,9 @@ function solveInput(inputFile) {
                 for (xFold of folds['x']) {
                     x = Math.abs(xFold - (Math.abs(xFold - x)))
                 }
-                touchedNodes[y][x] = 8
-            })
+                acc[y][x] = 8
+                return acc
+            }, Array.from(Array(MIN_Y), () => new Array(MIN_X).fill('')))
     return (touchedNodes)
 }
 
