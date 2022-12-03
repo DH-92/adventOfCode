@@ -1,5 +1,9 @@
+const word = ' '
+const line = '\n'
+const emptyLine = '\n\n'
+
 export const fileToString = (path) => fs.readFileSync(path).toString()
-export const fileToArr = (path,delim = '\n') => fs.readFileSync(path).toString().split(delim)
+export const fileToArr = (path,delim = line) => fs.readFileSync(path).toString().split(delim)
 export const sum = (acc, cal) => Number(acc) + Number(cal)
 export const numSort = (a, b) => a - b;
 export const numSortR = (a, b) => b - a;
