@@ -15,16 +15,16 @@ const isInside = (target, low, high) =>
     target === [target, low, high].sort(numSort)[1]
 
 const isSubSet = (a, b) => {
-    const [short, long] = [a, b].sort((a, b) => a.length - b.length);
-    return isInside(short.min, long.min, long.max) && isInside(short.max, long.min, long.max)
+    const [short, long] = [a, b].sort((a, b) => +a.length - b.length);
+    return isInside(short.min, long.min, long.max) &&
+        isInside(short.max, long.min, long.max)
 }
 
 const isIntersecting = (a, b) => isInside(a.min, b.min, b.max) || isInside(a.max, b.min, b.max)
 
 const toRange = (range) => {
-    const [min, max] = range.split('-').map(Number)
-    const length = max - min + 1;
-    return { min, max, length }
+    const [min, max] = range.split('-')
+    return { min, max, length: 1 + max - min }
 }
 
 const part1 = (path) =>
