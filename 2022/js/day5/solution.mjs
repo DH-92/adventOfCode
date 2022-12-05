@@ -13,33 +13,41 @@ const WORD = ' ';
 const EMPTY_LINE = '\n\n';
 const LINE = '\n';
 
-const stackToCol = (i) => {return (4 * (i-1))+1}
+const countStacks = (arr) => +arr.pop().split(WORD).filter(x => !!x).pop()
+
+const stackToCol = (i) => { return (4 * (i - 1)) + 1 }
+
+const buildStacks = (stacks, line) => {
+    stacks.forEach((stack, index) => {
+        if (line[stackToCol(index)] &&
+            line[stackToCol(index)].trim()
+        ) stack.push(line[stackToCol(index)]);
+    })
+    return stacks;
+}
+
+const init2D = (width) => Array(width).fill(null).map(() => [])
 
 const part1 = (path) => {
-    const [initialString, rules] = fileToArr(path, EMPTY_LINE)
-    const initialArr = initialString.split(LINE)
-    const stackCount =
-        initialArr
-            .pop()
-            .split(WORD)
-            .filter(x => !!x)
-            .pop()
-
-    const stacks = initialArr.reverse().reduce((stacks, line) => {
-        for (let i = 1; i <= stackCount; i++) {
-            console.log(stackCount,stacks.length)
-            // stacks[i] ??= [];
-            if (line[stackToCol(i)] !== ' ') stacks[i].push(line[stackToCol(i)]);
-        }
-        return stacks;
-    }, Array(+stackCount+1).fill(null).map(()=>['']))
-
-    rules.split(LINE).forEach(rule => {
+    const applyRule = (rule) => {
         const [, count, , from, , to] = rule.split(WORD);
-        for (let j = 0; j < count; j++) {
+        for (let i = 0; i < count; i++) {
             stacks[to].push(stacks[from].pop())
         }
-    })
+    }
+
+    const [initialState, rules] =
+        fileToArr(path, EMPTY_LINE)
+            .map(x => x.split(LINE))
+
+    const stackCount = +countStacks(initialState)
+
+    const stacks =
+        initialState
+            .reverse()
+            .reduce(buildStacks, init2D(stackCount+1))
+
+    rules.forEach(applyRule)
     return stacks.map(stack => stack.pop()).join('')
 }
 
@@ -47,27 +55,24 @@ echo(`part1 -- example: ${part1(example)}`)
 echo(`part1 -- input: ${part1(input)}`)
 
 const part2 = (path) => {
-    const [initialString, rules] = fileToArr(path, EMPTY_LINE)
-    const initialArr = initialString.split(LINE)
-    const stackCount = initialArr.pop().split(WORD).filter(x => !!x).pop()
-    const stacks = [];
+    const applyRule = (rule) => {
+        const [, count, , from, , to] = rule.split(WORD);
+        stacks[to].push(...stacks[from].splice(-count, count))
+    }
 
-    initialArr.reverse().forEach((line) => {
-        stacks[1] ??= []
-        if (line[1] !== ' ') stacks[1].push(line[1]);
-        for (let i = 1; i < stackCount; i++) {
-            stacks[i+1] ??= [];
-            const val = line[+1 + (4 * i)];
-            if (val !== ' ') stacks[i+1].push(line[+1 + (4 * i)]);
-        }
-    })
-    rules.split(LINE).forEach(rule => {
-        const [, count, , from, , to] = rule.split(' ');
-        const transit = stacks[from].splice(-count, count);
-        stacks[to].push(...transit)
-    })
+    const [initialState, rules] =
+        fileToArr(path, EMPTY_LINE)
+            .map(x => x.split(LINE))
+
+    const stackCount = +countStacks(initialState)
+    
+    const stacks =
+        initialState
+            .reverse()
+            .reduce(buildStacks, init2D(stackCount + 1))
+   
+    rules.forEach(applyRule)
     return stacks.map(stack => stack.pop()).join('')
-
 }
 
 echo(`part2 -- example: ${part2(example)}`)
