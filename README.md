@@ -1,2 +1,2 @@
-# adventOfCode-2021
-a set of unholy solutions to https://adventofcode.com/2021
+# adventOfCode
+a set of unholy solutions to https://adventofcode.com/
