@@ -5,9 +5,7 @@ const day = "day6";
 const input = `../../input/${day}/input.txt`
 const example = `../../input/${day}/example.txt`
 
-function isDistinct(array) {
-    return (new Set(array)).size === array.length;
-}
+const isDistinct = (array) => (new Set(array)).size === array.length;
 
 const parseInput = (path, target) => {
     const input = fileToArr(path, '')
