@@ -25,28 +25,26 @@ class Dir {
     }
 }
 
+const commands = (cwd) => ({
+    "cd": (target) => {
+        return (target === "/")
+            ? cwd.root
+            : (target === "..")
+                ? cwd.parent
+                : cwd.children[target]
+    },
+    "ls": () => cwd
+})
+
 const parseInput = (path) => {
     const root = new Dir("/", null);
     let cwd = root;
-
+    // echo (cwd.root.name)
     fileToArr(path).forEach(line => {
         const args = line.split(' ');
         switch (args[0]) {
             case "$":
-                // commands[args[1]](cwd,args[2]); break
-                switch (args[1]) {
-                    case "cd":
-                        const target = args[2];
-                        cwd = (target === "/")
-                            ? cwd.root
-                            : (target === "..")
-                                ? cwd.parent
-                                : cwd.children[target];
-                        break;
-                    case "ls":
-                    case "default":
-                }
-                break;
+                cwd = commands(cwd)[args[1]](args[2]); break
             //as ls is the only command with output assume we're in ls's output
             case "dir":
                 cwd.children[args[1]] = new Dir(args[0], cwd); break;
