@@ -1,10 +1,10 @@
-#!/usr/bin/env zx
-// import "zx/globals"
+const fs = require('fs');
+
 const day = "day9";
 const input = `../../input/${day}/input.txt`
 const example = `../../input/${day}/example.txt`
-
-const fileToArr = (path, delim = '\n') => fs.readFileSync(path).toString().split(delim)
+const fileToArr = (path, delim = '\n') =>
+    fs.readFileSync(path).toString().split(delim)
 
 const parseInput = (path) =>
     fileToArr(path).map(row => row.split(' '))
@@ -25,7 +25,7 @@ const moveNode = (leader, follower) => {
     if (isNeighbour) {
         return
     }
-    if (deltaY && deltaX) {
+    if (deltaX && deltaY) {
         followX()
         followY()
     } else if (deltaX) {
