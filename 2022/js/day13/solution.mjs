@@ -1,44 +1,24 @@
 #!/usr/bin/env zx
-// import "zx/globals"
 import fs from 'fs';
-import { isArray } from 'util';
 const day = "day13";
 const input = `../../input/${day}/input.txt`
 const example = `../../input/${day}/example.txt`
 
 const fileToArr = (path, delim = '\n') => fs.readFileSync(path).toString().split(delim)
 
-const echo = (...args) => console.log(...args);
-
-const compare = (left, right, depth = 0) => {
+const compare = (left, right) => {
     const isLeftArr = Array.isArray(left)
     const isRightArr = Array.isArray(right)
-    // const pad = "  ".repeat(depth);
-    // echo(pad, "- Compare ", left, " vs ", right)
-    if (!isLeftArr && !isRightArr) {
-        if (left === right) return 0;
-        if (left < right) {
-            // echo(pad, `  - Left side is smaller, so inputs are in the right order`, left, right)
-            return -1;
-        } else {
-            // echo(pad, `  - Right side is smaller, so inputs are not in the right order`, left, right)
-            return 1;
-        }
-    }
+    if (!isLeftArr && !isRightArr) return (left === right) ? 0 : (left < right) ? -1 : 1;
     if (isLeftArr && isRightArr) {
         for (let i = 0; i < right.length; i++) {
-            if (left[i] === undefined) {
-                // echo(pad, `- Left side ran out of items, so inputs are in the right order`, left, right)
-                return -1;
-            }
-            const cc = compare(left[i], right[i], depth + 1);
+            if (left[i] === undefined) return -1;
+            const cc = compare(left[i], right[i]);
             if (cc) return cc;
         }
-        if (left.length === right.length) return 0;
-        // echo(`- Right side ran out of items, so inputs are not in the right order`, left, right)
-        return 1
+        return (left.length === right.length) ? 0 : 1;
     }
-    return compare([].concat(left), [].concat(right), depth + 1)
+    return compare([].concat(left), [].concat(right))
 }
 
 const part1 = (path) => 
@@ -50,14 +30,13 @@ const part1 = (path) =>
         return (compare(left, right) === 1) ? sum += index + 1 : sum
     },0)
 
-
 const part2 = (path) => {
-    const packets = fileToArr(path)
+    const recode = fileToArr(path)
         .filter(packet => packet !== "")
-        .map(JSON.parse)
         .concat('[[2]]', '[[6]]')
+        .map(JSON.parse)
         .sort(compare)
-    const recode = packets.map(JSON.stringify)
+        .map(JSON.stringify)
     return (recode.indexOf('[[2]]') + 1) * (recode.indexOf('[[6]]') + 1)
 }
 
