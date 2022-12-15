@@ -1,60 +1,69 @@
 #!/usr/bin/env zx
-import "zx/globals"
-import {
-    fileToArr,
-} from "../helpers/index.mjs"
+import "zx/globals";
+import fs from 'fs';
 const day = "day14";
 const input = `../../input/${day}/input.txt`
-const example= `../../input/${day}/example.txt`
+const example = `../../input/${day}/example.txt`
 
-const calc = (path,passes) => {
-    const [polymer, ruleLines] = fileToArr(path, '\n\n');
-    const rules =
-        ruleLines.split('\n')
-            .map(line => line.split(' -> '))
-            .reduce((out,rule) => {
-                const [a, b] = rule[0].split("");
-                const c = rule[1];
-                out["" + a + b] = ["" + a + c, "" + c + b];
-                return out;
-            }, {})
-    
-    let pairs = {};
-    polymer.split("").reduce((last, curr) => {
-        pairs["" + last + curr] ??= 0;
-        pairs["" + last + curr]++;
-        return curr;
-    })
+const fileToArr = (path, delim = '\n') => fs.readFileSync(path).toString().split(delim)
 
-    for (let i = 0; i < passes; i++) {
-        const newPairs = {};
-        Object.entries(pairs).forEach(([key,val]) => {
-            const [a, b] = rules[key];
-            newPairs[a] = newPairs[a] ? val + newPairs[a] : val;
-            newPairs[b] = newPairs[b] ? val + newPairs[b] : val;
+const sandDown = ([x, y]) => [x, y + 1];
+const sandLeft = ([x, y]) => [x - 1, y];
+const sandRight = ([x, y]) => [x + 1, y];
+
+const part1 = (path) => {
+    const lineGroups = fileToArr(path, '\n');
+    const grid = new Array(1000).fill(null).map(x => [])
+    let height = 0;
+    lineGroups.forEach(group => group
+        .split(' -> ')
+        .map(line => line.split(',').map(Number))
+        .reduce(([x2, y2], [x, y]) => {
+            if (height < y) height = y;
+            if (x === x2) {
+                const [low, high] = [y2, y].sort((a, b) => a - b)
+                for (let i = low; i <= high; i++) grid[i][x] = "#";
+            } else {
+                const [low, high] = [x2, x].sort((a, b) => a - b)
+                for (let i = low; i <= high; i++) grid[y][i] = "#";
+            }
+            return [x, y]
         })
-        pairs = newPairs;
+    )
+    let final = 0;
+    let count = 0;
+    while (true) {
+        if (final) break;
+        let sandPos = [500, 0];
+        while (true) {
+            if (final) break;
+            const [x, y] = sandPos;
+            sandPos = sandDown(sandPos);
+            if (y + 1 >= height + 2) {
+                grid[y][x] = "O";
+                break;
+            }
+            const down = grid[y + 1][x]
+            if (!down) continue;
+            const downLeft = grid[+y + 1][+x - 1]
+            const downRight = grid[+y + 1][+x + 1]
+            if (downLeft && downRight) {
+                if (y === 0) final = ++count;
+                grid[y][x] = "O";
+                break;
+            }
+            sandPos = (downLeft)
+                ? sandRight(sandPos)
+                : sandLeft(sandPos);
+        }
+        count++;
     }
-
-    const elements = {};
-    Object.entries(pairs).forEach(([key, val]) => {
-        const [a, b] = key.split('');
-        elements[a] = elements[a] ? val + elements[a] : val;
-        elements[b] = elements[b] ? val + elements[b] : val;
-    })
-
-    let min = Number.MAX_SAFE_INTEGER;
-    let max = 0;
-    Object.entries(elements).forEach(([key, val]) => {
-        elements[key] = Math.ceil(elements[key] / 2)
-        if (min > elements[key]) min = elements[key]
-        if (max < elements[key]) max = elements[key]
-    })
-    return +max-min
+    return final;
 }
-
-echo(`part1 -- example: ${calc(example,10)}`)
-echo(`part1 -- input: ${calc(input,10)}`)
-
-echo(`part2 -- example: ${calc(example,40)}`)
-echo(`part2 -- input: ${calc(input,40)}`)
+console.profile()
+console.log(`part1 -- example: ${part1(example)}`)
+// console.log(`user output should be greater than 359`)
+console.log(`part1 -- input: ${part1(input)}`)
+console.profileEnd()
+// console.log(`part2 -- example: ${part2(example)}`)
+// console.log(`part2 -- input: ${part2(input)}`)

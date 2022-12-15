@@ -21,14 +21,12 @@ const compare = (left, right) => {
     return compare([].concat(left), [].concat(right))
 }
 
-const part1 = (path) => 
+const part1 = (path) =>
     fileToArr(path, '\n\n')
         .map(pair => pair.split('\n'))
-        .reduce((sum, pair, index) => {
-        const left = JSON.parse(pair[0])
-        const right = JSON.parse(pair[1])
-        return (compare(left, right) === 1) ? sum += index + 1 : sum
-    },0)
+        .reduce((sum, [l, r], index) =>
+            compare(JSON.parse(l), JSON.parse(r)) === 1 ? sum += index + 1 : sum
+        , 0)
 
 const part2 = (path) => {
     const recode = fileToArr(path)
