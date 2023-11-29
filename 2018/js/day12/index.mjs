@@ -1,57 +1,80 @@
 #!/usr/bin/env zx
 import 'zx/globals';
-import { InputHandler } from '../helpers/index.mjs';
+import {
+  InputHandler,
+  example,
+  input,
+  line,
+  paragraph,
+  word,
+} from '../helpers/index.mjs';
 
-const part1 = (gsn, size) => {
-  const grid = new Array(size + 1).fill().map(_ => new Array(size + 1).fill().map(_ => 0));
-  for (let x = 1; x <= size; x++) {
-    for (let y = 1; y <= size; y++) {
-      grid[y][x] = calculatePower(gsn, x, y);
+const inputHandler = new InputHandler(process.cwd());
+
+const part1 = path => {
+  const startTime = Date.now()
+  const [stateLine, rulesLines] = inputHandler.toArray(path, paragraph);
+  const rules = rulesLines.split(line).reduce((acc, l) => {
+    const [a, _, b] = l.split(word);
+    acc[a] = b;
+    return acc;
+  }, {});
+  const initState = `...${stateLine.split(word)[2]}`.split('');
+  let state = initState
+  for (let gen = 0; gen < 20; gen++) {
+    const oldState = `..${state.join('')}....`.split('');
+    const newState = []
+    for (let i = 0; i <= oldState.length; i++) {
+      const key = oldState.slice(i, i + 5).join('')
+      const val = rules[key] ?? '.'
+      newState[i+2] = val
+    }
+    state = newState.slice(2);
+    while (state.slice(-5).join('') === ".....") {
+      state.pop()
     }
   }
-  // console.table(grid);
-  let maxV = 0;
-  for (let s = 1; s <= 50; s++){
-    for (let x = 1; x <= size-s; x++) {
-      for (let y = 1; y <= size-s; y++) {
-        let v = 0;
-        for (let xx = 0; xx < s; xx++) {
-          for (let yy = 0; yy < s; yy++) {
-            v += grid[y+yy][x+xx]
-          }
-        }
-        if (v > maxV) {
-          console.log(`${x},${y},${s} => ${v}`);
-          maxV = v;
-        }
-      }
-    }
-  }
-  console.log(`------`)
+  return state.reduce((acc, v, i) => {
+    if (v === '#') acc += i-3
+    return acc
+  }, 0)
 };
 
-// console.time('p1e');
-// echo(`part1 -- example: ${ await part1(example)}`);
-// console.timeEnd('p1e');
-// console.time('p1');
-echo(`part1 -- example: ${part1(18, 300)}`);
-echo(`part1 -- example: ${part1(42, 300)}`);
-echo(`part1 -- input: ${part1(2568, 300)}`);
-// console.timeEnd('p1');
+console.time('p1e');
+echo(`part1 -- example: ${part1(example)}`);
+console.timeEnd('p1e');
+console.time('p1');
+echo(`part1 -- input: ${part1(input)}`);
+console.timeEnd('p1');
 
-// const part2 = path => {
-//   const input = inputHandler.toArray(path, word).map(Number);
-//   const node = (childCount = input.shift(), metaCount = input.shift()) => {
-//     if (!childCount) {
-//       return new Array(metaCount).fill().reduce(sum => sum + input.shift(), 0);
-//     }
-//     const children = new Array(childCount).fill().map(_ => node());
-//     return new Array(metaCount).fill().reduce(sum => sum + (children[input.shift() - 1] ?? 0), 0);
-
-//   };
-//   return node();
+// const part2 = (path) => {
+//   const startTime = Date.now()
+//   const [stateLine, rulesLines] = inputHandler.toArray(path, paragraph);
+//   const rules = rulesLines.split(line).reduce((acc, l) => {
+//     const [a, _, b] = l.split(word);
+//     acc[a] = b;
+//     return acc;
+//   }, {});
+//   const initState = `...${stateLine.split(word)[2]}`.split('');
+//   let state = initState
+//   for (let gen = 0; gen < 50000000000; gen++) {
+//     // const oldState = `..${state.join('')}....`.split('');
+//     // const newState = []
+//     // for (let i = 0; i <= oldState.length; i++) {
+//     //   const key = oldState.slice(i, i + 5).join('')
+//     //   const val = rules[key] ?? '.'
+//     //   newState[i+2] = val
+//     // }
+//     // state = newState.slice(2);
+//     // while (state.slice(-5).join('') === ".....") {
+//     //   state.pop()
+//     // }
+//   }
+//   return state.reduce((acc, v, i) => {
+//     if (v === '#') acc += i-3
+//     return acc
+//   }, 0)
 // };
-
 // console.time('p2e');
 // echo(`part2 -- example: ${part2(example)}`);
 // console.timeEnd('p2e');

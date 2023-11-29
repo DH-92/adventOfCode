@@ -1,6 +1,6 @@
 export const word = ' ';
 export const line = '\n';
-export const emptyLine = '\n\n';
+export const paragraph = '\n\n';
 export const example = 'example.txt';
 export const input = 'input.txt';
 
