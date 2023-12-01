@@ -2,7 +2,8 @@
   "extends": "./node_modules/gts/",
   "rules": {
     "node/shebang": "off",
-    "node/no-missing-import": "off"
+    "node/no-missing-import": "off",
+    "object-curly-spacing": ["error", "always"]
   },
   "ignorePatterns": [".prettierrc.js"]
 }
