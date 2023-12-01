@@ -1,0 +1,8 @@
+{
+  "extends": "./node_modules/gts/",
+  "rules": {
+    "node/shebang": "off",
+    "node/no-missing-import": "off"
+  },
+  "ignorePatterns": [".prettierrc.js"]
+}
