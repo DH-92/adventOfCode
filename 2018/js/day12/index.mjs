@@ -12,7 +12,7 @@ import {
 const inputHandler = new InputHandler(process.cwd());
 
 const part1 = path => {
-  const startTime = Date.now()
+  const startTime = Date.now();
   const [stateLine, rulesLines] = inputHandler.toArray(path, paragraph);
   const rules = rulesLines.split(line).reduce((acc, l) => {
     const [a, _, b] = l.split(word);
@@ -20,24 +20,30 @@ const part1 = path => {
     return acc;
   }, {});
   const initState = `...${stateLine.split(word)[2]}`.split('');
-  let state = initState
-  for (let gen = 0; gen < 20; gen++) {
+  let state = initState;
+  for (let gen = 0; gen < 2000; gen++) {
     const oldState = `..${state.join('')}....`.split('');
-    const newState = []
+    const newState = [];
     for (let i = 0; i <= oldState.length; i++) {
-      const key = oldState.slice(i, i + 5).join('')
-      const val = rules[key] ?? '.'
-      newState[i+2] = val
+      const key = oldState.slice(i, i + 5).join('');
+      const val = rules[key] ?? '.';
+      newState[i + 2] = val;
     }
     state = newState.slice(2);
-    while (state.slice(-5).join('') === ".....") {
-      state.pop()
+    while (state.slice(-5).join('') === '.....') {
+      state.pop();
     }
+    console.log(state.join(''));
+    const sum = state.reduce((acc, v, i) => {
+      if (v === '#') acc += i - 3;
+      return acc;
+    }, 0);
+    console.log(sum);
   }
-  return state.reduce((acc, v, i) => {
-    if (v === '#') acc += i-3
-    return acc
-  }, 0)
+  // return state.reduce((acc, v, i) => {
+  //   if (v === '#') acc += i - 3;
+  //   return acc;
+  // }, 0);
 };
 
 console.time('p1e');
