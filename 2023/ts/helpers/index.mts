@@ -49,11 +49,11 @@ export function bench<T>(logger: Logger, name: string, func: () => T, expected?:
 
   if (assert === '') {
     logger.clear()
-    console.log('%s: %o [%s]%c%s', name, result, duration.toFixed(2) + 'ms', 'color: red')
+    console.log('%s: %o [%s]%c', name, result, duration.toFixed(2) + 'ms', 'color: red')
     return
   }
   logger.dump()
-  console.log('%s: %o %c%s', name, result, 'color: red', assert)
+  console.log('%s: %o [%s]%c %s', name, result, duration.toFixed(2) + 'ms', 'color: red', assert)
   throw ''
 }
 

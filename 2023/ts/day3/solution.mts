@@ -21,16 +21,17 @@ const log = logger.log
 
 const part1 = (path: string): string | number => {
   const grid = getGrid<Set<[number, string]>>(() => new Set(), 141)
-  const markGrid = (lineId, partId) =>
-    range(partId.index! - 1, partId.index! + partId[0].length).forEach(x =>
-      range(lineId - 1, lineId + 1).forEach(yy =>
-        grid[yy][x].add([Number(partId[0]), `${x},${lineId}`])
-      )
-    )
   const pointers = inputHandler.toArray(path, LINE).reduce(
     (pointers, line, lineId) => {
-      ;[...line.matchAll(/[^\d.]+/g)].forEach(pointer => pointers.push([lineId, pointer.index!]))
-      ;[...line.matchAll(/\d+/g)].forEach(partId => markGrid(lineId, partId))
+      for (const match of line.matchAll(/\d+/dg)) {
+        const [start, end] = match.indices![0]
+        range(start - 1, end).forEach(x =>
+          range(lineId - 1, lineId + 1).forEach(yy =>
+            grid[yy][x].add([Number(match[0]), `${x},${lineId}`])
+          )
+        )
+      }
+      ;[...line.matchAll(/[^\d.]/g)].forEach(pointer => pointers.push([lineId, pointer.index!]))
       return pointers
     },
     [] as [number, number][]
@@ -40,27 +41,26 @@ const part1 = (path: string): string | number => {
 
 const part2 = (path: string): string | number => {
   const grid = getGrid<Set<[number, string]>>(() => new Set(), 141)
-  return inputHandler
-    .toArray(path, LINE)
-    .reduce(
-      (pointers, line, lineId) => {
-        ;[...line.matchAll(/[^\d.]+/g)].forEach(pointer => pointers.push([lineId, pointer.index!]))
-        ;[...line.matchAll(/\d+/g)].forEach(partId =>
-          range(partId.index! + -1, partId.index! + partId[0].length).forEach(x =>
-            range(lineId - 1, lineId + 1).forEach(yy => {
-              grid[yy][x].add([Number(partId[0]), `${x},${lineId}`])
-            })
+  const pointers = inputHandler.toArray(path, LINE).reduce(
+    (pointers, line, lineId) => {
+      for (const match of line.matchAll(/\d+/dg)) {
+        const [start, end] = match.indices![0]
+        range(start - 1, end).forEach(x =>
+          range(lineId - 1, lineId + 1).forEach(yy =>
+            grid[yy][x].add([Number(match[0]), `${x},${lineId}`])
           )
         )
-        return pointers
-      },
-      [] as [number, number][]
-    )
-    .reduce((sum, [y, x]) => {
-      const g = grid[y][x]
-      if (g.size === 2) sum += [...g].map(z => z[0]).reduce(product)
-      return sum
-    }, 0)
+      }
+      ;[...line.matchAll(/[^\d.]+/g)].forEach(pointer => pointers.push([lineId, pointer.index!]))
+      return pointers
+    },
+    [] as [number, number][]
+  )
+  return pointers.reduce((sum, [y, x]) => {
+    const g = grid[y][x]
+    if (g.size === 2) sum += [...g].map(z => z[0]).reduce(product)
+    return sum
+  }, 0)
 }
 
 console.clear()
