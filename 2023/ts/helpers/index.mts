@@ -17,6 +17,46 @@ export class InputHandler {
     this.toString(file).split(delim)
 }
 
+export class Logger {
+  private events: unknown[]
+  constructor() {
+    this.events = []
+  }
+  log = (...messages: unknown[]): void => {
+    this.events.push(messages)
+  }
+  dump = (): void => this.events.forEach(event => console.debug(event))
+  clear = (): void => {
+    this.events.splice(0, this.events.length)
+  }
+}
+
+export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T) {
+  const start = performance.now()
+  const result = func()
+  const end = performance.now()
+
+  let duration = end - start
+
+  const assert =
+    typeof expected !== 'undefined' && result !== expected ? ` !!! EXPECTED ${expected} !!!` : ''
+
+  if (typeof result === 'string' && /\n/.test(result)) {
+    console.log('%s: [%s]%c%s', name, duration.toFixed(2) + 'ms', 'color: red', assert)
+    console.log(result)
+    return
+  }
+
+  if (assert === '') {
+    logger.clear()
+    console.log('%s: %o [%s]%c%s', name, result, duration.toFixed(2) + 'ms', 'color: red')
+    return
+  }
+  logger.dump()
+  console.log('%s: %o %c%s', name, result, 'color: red', assert)
+  throw ''
+}
+
 export const sum = (acc: number, cal: number): number => acc + cal
 export const product = (acc: number, cal: number): number => acc * cal
 export const numSort = (a: number, b: number): number => a - b
@@ -48,24 +88,16 @@ export const reshape = <T,>(flat: T[], width: number): T[][] =>
 export const transpose = <T,>(matrix: T[][]): T[][] =>
   matrix.reduce((prev, next) => next.map((_, i) => (prev[i] ?? []).concat(next[i])), [[]] as T[][])
 
-export function bench<T>(name: string, func: () => T, expected?: T) {
-  const start = performance.now()
-  const result = func()
-  const end = performance.now()
-
-  let duration = end - start
-
-  const assert =
-    typeof expected !== 'undefined' && result !== expected ? ` !!! EXPECTED ${expected} !!!` : ''
-
-  if (typeof result === 'string' && /\n/.test(result)) {
-    console.log('%s: [%s]%c%s', name, duration.toFixed(2) + 'ms', 'color: red', assert)
-    console.log(result)
-    return
-  }
-
-  console.log('%s: %o [%s]%c%s', name, result, duration.toFixed(2) + 'ms', 'color: red', assert)
-  if (assert !== '') {
-    throw `${name}: ${result} [${duration.toFixed(2)}ms] ${assert}`
-  }
+export const range = (
+  start: number,
+  finish: number,
+  min: number = 0,
+  max: number = Number.MAX_SAFE_INTEGER
+): number[] => {
+  const response: number[] = []
+  for (let i = Math.max(start, min); i <= Math.min(finish, max); i++) response.push(i)
+  return response
 }
+
+export const getGrid = <T,>(filling: () => T, x: number, y?: number): T[][] =>
+  new Array(x).fill(undefined).map(_ => new Array(y ?? x).fill(undefined).map(_ => filling()))

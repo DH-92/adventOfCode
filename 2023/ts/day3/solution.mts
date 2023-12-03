@@ -6,13 +6,12 @@ import {
   bench,
   EXAMPLE,
   INPUT,
-  WORD,
   LINE,
-  PARAGRAPH,
   Logger,
   range,
   sum,
   product,
+  getGrid,
 } from '../helpers/index.mjs'
 
 const inputHandler = new InputHandler(process.cwd())
@@ -21,87 +20,57 @@ const logger = new Logger()
 const log = logger.log
 
 const part1 = (path: string): string | number => {
-  const lines = inputHandler.toArray(path, LINE)
-  const numbers = new Set()
-  const grid: Set<[Number, string]>[][] = new Array(140 + 1)
-    .fill()
-    .map(_ => new Array(140 + 1).fill().map(_ => new Set() as Set<Number>))
-  lines.forEach((l, y) => {
-    log(y, l)
-    const nums = [...l.matchAll(/[0-9]+/g)]
-    nums.forEach(n => {
-      const num = Number(n[0])
-      const start = Math.max(0, Number(n.index))
-      const end = Math.min(140, Number(n.index) + n[0].length + 1)
-      range(start, end).forEach(x => {
-        grid[Math.max(0, y - 1)][x].add([num, `${x},${y}`])
-        grid[y][x].add([num, `${x},${y}`])
-        grid[Math.min(140, y + 1)][x].add([num, `${x},${y}`])
-      })
-      // console.log(`${num} on line ${y} touches from ${start} to ${end} (${n.index}+${n[0].length})`)
-      // console.table(grid)
+  const numbers: Set<[number, string]> = new Set()
+  const grid = getGrid<Set<[number, string]>>(() => new Set(), 141)
+  inputHandler
+    .toArray(path, LINE)
+    .map((line, lineId) => {
+      ;[...line.matchAll(/\d+/g)].forEach(partId =>
+        range(partId.index! - 1, partId.index! + partId[0].length).forEach(x =>
+          range(lineId - 1, lineId + 1).forEach(yy =>
+            grid[yy][x].add([Number(partId[0]), `${x},${lineId}`])
+          )
+        )
+      )
+      return line
     })
-  })
-  lines.forEach((l, y) => {
-    const chars = [...l.matchAll(/[^\d\.]+/g)]
-    chars.forEach(c => {
-      const char = c[0]
-      log(`${char} on pos ${y} ${c.index} touching ${[...grid[y][c.index]]}`)
-      const g = [...grid[y][c.index + 1]]
-      g.forEach(n => numbers.add(n))
-    })
-  })
-  log(numbers)
-  log([...numbers].map(x => x[0]).reduce(sum))
-  // console.table(grid)
+    .forEach((line, lineId) =>
+      [...line.matchAll(/[^\d.]+/g)].forEach(match =>
+        [...grid[lineId][match.index!]].forEach(n => numbers.add(n))
+      )
+    )
   return [...numbers].map(x => x[0]).reduce(sum)
 }
 
 const part2 = (path: string): string | number => {
-  const lines = inputHandler.toArray(path, LINE)
-  const numbers = new Set()
-  const grid: Set<[Number, string]>[][] = new Array(140 + 1)
-    .fill()
-    .map(_ => new Array(140 + 1).fill().map(_ => new Set() as Set<Number>))
-  let sum = 0
-  lines.forEach((l, y) => {
-    log(y, l)
-    const nums = [...l.matchAll(/[0-9]+/g)]
-    nums.forEach(n => {
-      const num = Number(n[0])
-      const start = Math.max(0, Number(n.index))
-      const end = Math.min(140, Number(n.index) + n[0].length + 1)
-      range(start, end).forEach(x => {
-        grid[Math.max(0, y - 1)][x].add([num, `${x},${y}`])
-        grid[y][x].add([num, `${x},${y}`])
-        grid[Math.min(140, y + 1)][x].add([num, `${x},${y}`])
+  const grid = getGrid<Set<[number, string]>>(() => new Set(), 141)
+  return inputHandler
+    .toArray(path, LINE)
+    .map((line, lineId) => {
+      ;[...line.matchAll(/\d+/g)].forEach(partId =>
+        range(partId.index! + -1, partId.index! + partId[0].length).forEach(x =>
+          range(lineId - 1, lineId + 1).forEach(yy => {
+            grid[yy][x].add([Number(partId[0]), `${x},${lineId}`])
+          })
+        )
+      )
+      return line
+    })
+    .reduce((sum, l, y) => {
+      ;[...l.matchAll(/\*/g)].forEach(match => {
+        const g = grid[y][match.index!]
+        if (g.size === 2) sum += [...g].map(x => x[0]).reduce(product)
       })
-      // console.log(`${num} on line ${y} touches from ${start} to ${end} (${n.index}+${n[0].length})`)
-      // console.table(grid)
-    })
-  })
-  lines.forEach((l, y) => {
-    const chars = [...l.matchAll(/\*/g)]
-    chars.forEach(c => {
-      const char = c[0]
-      log(`${char} on pos ${y} ${c.index} touching ${[...grid[y][c.index]].map(x => x[0])}`)
-      const g = grid[y][c.index + 1]
-      log(g.size)
-      if (g.size === 2) {
-        log(`found two ${[...g].map(x => x[0])} === ${[...g].map(x => x[0]).reduce(product)}`)
-        sum += [...g].map(x => x[0]).reduce(product)
-      }
-      g.forEach(n => numbers.add(n))
-    })
-  })
-
-  return sum
+      return sum
+    }, 0)
 }
 
-// console.clear()
+console.clear()
 try {
   bench(logger, 'part 1 example', () => part1(EXAMPLE), 4361)
   bench(logger, 'part 1 input', () => part1(INPUT), 535078)
   bench(logger, 'part 2 example', () => part2(EXAMPLE), 467835)
-  bench(logger, 'part 2 input', () => part2(INPUT), 0)
-} catch (e) {}
+  bench(logger, 'part 2 input', () => part2(INPUT), 75312571)
+} catch (e) {
+  console.log(e)
+}
