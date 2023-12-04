@@ -6,7 +6,6 @@ import {
   EXAMPLE,
   INPUT,
   LINE,
-  product,
   sum,
   bench,
   Logger,
@@ -25,16 +24,19 @@ const part1 = (path: string): string | number =>
   }, 0)
 
 const part2 = (path: string): string | number => {
-  const scores = [[0, 0]] as [number, number][] // count of card and matches
-  inputHandler.toArray(path, LINE).forEach(card => {
-    const [left, right] = card.split(':')[1].split('|')
-    const winners = new Set([...left.matchAll(/\d+/g)].map(x => Number(x[0])))
-    scores.push([1, [...right.matchAll(/\d+/g)].filter(x => winners.has(Number(x[0]))).length])
-  })
-
-  return scores
-    .map(([count, matches], card) => {
-      if (matches) range(card + 1, card + matches).forEach(y => (scores[y][0] += count))
+  return inputHandler
+    .toArray(path, LINE)
+    .reduce(
+      (scores, card) => {
+        const [left, right] = card.split(':')[1].split('|')
+        const l = [...left.matchAll(/\d+/g)].map(x => Number(x[0]))
+        scores.push([1, [...right.matchAll(/\d+/g)].filter(x => l.includes(Number(x[0]))).length])
+        return scores
+      },
+      [[0, 0]] as [number, number][]
+    )
+    .map(([count, matches], card, scores) => {
+      if (matches) range(card + 1, card + matches).forEach(x => (scores[x][0] += count))
       return count
     })
     .reduce(sum)!
