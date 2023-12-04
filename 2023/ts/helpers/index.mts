@@ -33,6 +33,7 @@ export class Logger {
 
 export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T) {
   const start = performance.now()
+  // for (let i = 0; i < 99; i++) func()
   const result = func()
   const end = performance.now()
 
@@ -57,7 +58,7 @@ export function bench<T>(logger: Logger, name: string, func: () => T, expected?:
   throw ''
 }
 
-export const sum = (acc: number, cal: number): number => acc + cal
+export const sum = (acc: number = 0, cal: number = 0): number => acc + cal
 export const product = (acc: number, cal: number): number => acc * cal
 export const numSort = (a: number, b: number): number => a - b
 export const numSortR = (a: number, b: number): number => b - a
@@ -90,12 +91,14 @@ export const transpose = <T,>(matrix: T[][]): T[][] =>
 
 export const range = (
   start: number,
-  finish: number,
+  finish?: number,
   min: number = 0,
   max: number = Number.MAX_SAFE_INTEGER
 ): number[] => {
   const response: number[] = []
-  for (let i = Math.max(start, min); i <= Math.min(finish, max); i++) response.push(i)
+  const from = Math.max(min, finish !== undefined ? start : 1)
+  const to = Math.min(max, finish !== undefined ? finish : start)
+  for (let i = from; i <= to; i++) response.push(i)
   return response
 }
 

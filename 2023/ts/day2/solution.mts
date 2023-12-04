@@ -1,8 +1,21 @@
 #!/usr/bin/env npx tsx --watch
 import 'zx/globals'
-import { InputHandler, EXAMPLE, INPUT, WORD, LINE, product, sum, bench } from '../helpers/index.mjs'
+import {
+  //force multiline
+  InputHandler,
+  EXAMPLE,
+  INPUT,
+  LINE,
+  product,
+  sum,
+  bench,
+  Logger,
+} from '../helpers/index.mjs'
 
 const inputHandler = new InputHandler(process.cwd())
+
+const logger = new Logger()
+const log = logger.log
 
 enum Colour {
   red = 'red',
@@ -14,13 +27,9 @@ const part1 = (path: string): string | number =>
   inputHandler
     .toArray(path, LINE)
     .map((line, gameId) => {
-      const picks = line
-        .split(':')[1]
-        .split(/;|,/)
-        .map((pick: string): [number, Colour] => {
-          const p = pick.trim().split(WORD)
-          return [Number(p[0]), p[1] as Colour]
-        })
+      const picks = [...line.match(/(\d+ \w+)/g)!].map(p => {
+        return []
+      })
       for (const [n, colour] of picks) {
         switch (colour) {
           case Colour.red:
@@ -69,10 +78,10 @@ const part2 = (path: string): string | number =>
     .reduce(sum)
 
 try {
-  bench('part 1 example', () => part1(EXAMPLE), 8)
-  bench('part 1 input', () => part1(INPUT), 1867)
-  bench('part 2 example', () => part2(EXAMPLE), 2286)
-  bench('part 2 input', () => part2(INPUT), 84538)
+  bench(logger, 'part 1 example', () => part1(EXAMPLE), 8)
+  bench(logger, 'part 1 input', () => part1(INPUT), 1867)
+  bench(logger, 'part 2 example', () => part2(EXAMPLE), 2286)
+  bench(logger, 'part 2 input', () => part2(INPUT), 84538)
 } catch (e) {
   console.error(e)
 }
