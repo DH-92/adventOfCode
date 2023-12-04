@@ -18,18 +18,11 @@ const inputHandler = new InputHandler(process.cwd())
 const logger = new Logger()
 const log = logger.log
 
-const part1 = (path: string): string | number => {
-  const cards = inputHandler.toArray(path, LINE)
-  return cards.reduce((sum, card) => {
-    const [win, my] = card.split(':')[1].split('|')
-    const winners = [...win.matchAll(/\d+/g)].reduce(
-      (acc, x) => acc.add(x[0]),
-      new Set() as Set<string>
-    )
-    const count = [...my.matchAll(/\d+/g)].filter(x => winners.has(x[0])).length
-    return Math.floor((sum += 2 ** (count - 1)))
+const part1 = (path: string): string | number =>
+  inputHandler.toArray(path, LINE).reduce((s, c) => {
+    const m = [...c.split(':')[1].matchAll(/\s(\d+)(?=\s(\s|\d)*\|(\s|\d)*\s\1(\s|$))/g)].length
+    return s + (m ? 2 ** (m - 1) : 0)
   }, 0)
-}
 
 const part2 = (path: string): string | number => {
   const scores = [[0, 0]] as [number, number][] // count of card and matches
