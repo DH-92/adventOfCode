@@ -29,12 +29,12 @@ const part1 = (path: string): string | number => {
       .map(Number)
   )
   let s = 1
-  times.forEach((t, i) => {
-    let w = 0
-    for (let h = 1; h <= t / 2; h++) {
-      if (h * (t - h) > dists[i]) w += 2
+  times.forEach((time, i) => {
+    let w = time % 2 !== 0 ? 0 : -1
+    for (let h = Math.floor(time / 2); h >= 1; h--) {
+      if (h * (time - h) <= dists[i]) break
+      w += 2
     }
-    if (t % 2 === 0) w--
     s *= w
   })
   return s
@@ -43,16 +43,12 @@ const part1 = (path: string): string | number => {
 const part2 = (path: string): string | number => {
   const lines = inputHandler.toArray(path, LINE)
   const [time, dist] = lines.map(l => l.split(':')[1].trim().split(/\s+/).join('')).map(Number)
-  let s = 1
-  let w = 0
-  for (let h = 1; h <= time / 2; h++) {
-    if (h * (time - h) > dist) {
-      w += 2
-    }
+  let wins = time % 2 !== 0 ? 0 : -1 // we double count the time / 2 if time is even so start at -1
+  for (let h = Math.floor(time / 2); h >= 1; h--) {
+    if (h * (time - h) <= dist) break
+    wins += 2
   }
-  if (time % 2 === 0) w--
-  s *= w
-  return s
+  return wins
 }
 
 console.clear()
