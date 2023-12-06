@@ -33,7 +33,7 @@ export class Logger {
 
 export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T) {
   const start = performance.now()
-  // for (let i = 0; i < 99; i++) func()
+  for (let i = 0; i < 999; i++) func()
   const result = func()
   const end = performance.now()
 
@@ -54,6 +54,7 @@ export function bench<T>(logger: Logger, name: string, func: () => T, expected?:
     return
   }
   logger.dump()
+  logger.clear()
   console.log('%s: %o [%s]%c %s', name, result, duration.toFixed(2) + 'ms', 'color: red', assert)
   throw ''
 }
@@ -102,5 +103,41 @@ export const range = (
   return response
 }
 
+export const range2 = (
+  start: number,
+  finish?: number,
+  min: number = 0,
+  max: number = Number.MAX_SAFE_INTEGER
+) => {
+  const from = Math.max(min, finish !== undefined ? start : 1)
+  const to = Math.min(max, finish !== undefined ? finish : start)
+  let index = from
+  let iterationCount = 0
+  return {
+    next() {
+      if (index <= to) {
+        const result = { value: index, done: false }
+        index++
+        iterationCount++
+        return result
+      }
+      return { value: iterationCount, done: true }
+    },
+  }
+}
+
 export const getGrid = <T,>(filling: () => T, x: number, y?: number): T[][] =>
   new Array(x).fill(undefined).map(_ => new Array(y ?? x).fill(undefined).map(_ => filling()))
+
+function quadraticSolver(a: number, b: number, c: number) {
+  if (a === 0) throw 'unable to solve quadratic equations where a is 0'
+  const descriminant = b ** 2 - 4 * a * c
+  if (descriminant < 0) throw 'a negative descriminant will give complex number results'
+  if (descriminant === 0) {
+    // if descriminant is equal to zero the roots are real and equal
+    const root = (-b / 2) * a
+    return [root, root]
+  }
+  const inner = Math.sqrt(descriminant)
+  return [(-b + inner) / 2 / a, (-b - inner) / 2 / a]
+}

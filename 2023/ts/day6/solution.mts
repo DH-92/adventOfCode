@@ -6,12 +6,7 @@ import {
   bench,
   EXAMPLE,
   INPUT,
-  LINE,
   Logger,
-  range,
-  sum,
-  product,
-  getGrid,
 } from '../helpers/index.mjs'
 
 const inH = new InputHandler(process.cwd())
@@ -41,14 +36,19 @@ function bSearch(time: number, dist: number) {
   }
 }
 
+function solve(time: number, dist: number) {
+  const inner = Math.sqrt(Math.pow(time, 2) - 4 * (dist + 1))
+  return Math.floor((time + inner) / 2) - Math.ceil((time - inner) / 2) + 1
+}
+
 const part1 = (path: string): string | number => {
   const [times, dists] = inH.toArray(path).map(l => l.split(':')[1].trim().split(/\s+/).map(Number))
-  return times.reduce((s, time, i) => s * bSearch(time, dists[i]), 1)
+  return times.reduce((s, time, i) => s * solve(time, dists[i]), 1)
 }
 
 const part2 = (path: string): string | number => {
   const [time, dist] = inH.toArray(path).map(l => Number(l.split(':')[1].replace(/\s+/g, '')))
-  return bSearch(time, dist)
+  return solve(time, dist)
 }
 
 console.clear()
