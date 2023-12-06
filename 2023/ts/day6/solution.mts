@@ -14,53 +14,45 @@ import {
   getGrid,
 } from '../helpers/index.mjs'
 
-const inputHandler = new InputHandler(process.cwd())
+const inH = new InputHandler(process.cwd())
 
 const logger = new Logger()
 const log = logger.log
 
-function binarySearch(time: number, dist: number) {
+function bSearch(time: number, dist: number) {
   let start = 1
   let end = Math.floor(time / 2)
+  // Find lowest hold value that can still win
   const isWin = (h: number): boolean => h * (time - h) > dist
-  while (start <= end) {
+  while (true) {
     const mid = start + Math.floor((end - start) / 2)
-    if (isWin(mid) && !isWin(mid - 1)) return mid
-    if (isWin(mid - 1) && isWin(mid)) {
-      end = mid - 1
-    } else {
+    if (!isWin(mid)) {
       start = mid + 1
+      continue
     }
+    if (isWin(mid - 1)) {
+      end = mid - 1
+      continue
+    }
+    // holdTime = mid
+    // Then return 2 * the difference between the minimum winning hold time and the mid point
+    // We then add a magic constant depending on if the time value was even
+    return 2 * (Math.floor(time / 2) - mid) + (time % 2 !== 0 ? +2 : +1)
   }
 }
 
 const part1 = (path: string): string | number => {
-  const lines = inputHandler.toArray(path, LINE)
-  const [times, dists] = lines.map(l =>
-    l
-      .split(':')[1]
-      .trim()
-      .split(/[^\d]+/)
-      .map(Number)
-  )
-  return times.reduce((s, time, i) => {
-    const h = binarySearch(time, dists[i])
-    return s * ((time % 2 !== 0 ? +2 : +1) + (h - Math.floor(time / 2)) * -2)
-  }, 1)
+  const lines = inH.toArray(path, LINE)
+  const [times, dists] = lines.map(l => l.split(':')[1].trim().split(/\s+/).map(Number))
+  return times.reduce((s, time, i) => s * bSearch(time, dists[i]), 1)
 }
 
 const part2 = (path: string): string | number => {
-  const lines = inputHandler.toArray(path, LINE)
-  const [time, dist] = lines.map(l => l.split(':')[1].trim().split(/\s+/).join('')).map(Number)
-  const h = binarySearch(time, dist)!
-  return (time % 2 !== 0 ? +2 : +1) + (h - Math.floor(time / 2)) * -2
-  // for (let h = 1; h <= Math.floor(time / 2); h++) {
-  //   if (h * (time - h) > dist) return (time % 2 !== 0 ? +2 : +1) + (h - Math.floor(time / 2)) * -2
-  // }
-  throw 'impossible'
+  const [time, dist] = inH.toArray(path, LINE).map(l => Number(l.split(':')[1].replace(/\s+/g, '')))
+  return bSearch(time, dist)!
 }
 
-// console.clear()
+console.clear()
 try {
   bench(logger, 'part 1 example', () => part1(EXAMPLE), 288)
   bench(logger, 'part 1 input', () => part1(INPUT), 4568778)
