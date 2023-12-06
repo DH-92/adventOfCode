@@ -19,6 +19,21 @@ const inputHandler = new InputHandler(process.cwd())
 const logger = new Logger()
 const log = logger.log
 
+function binarySearch(time: number, dist: number) {
+  let start = 1
+  let end = Math.floor(time / 2)
+  const isWin = (h: number): boolean => h * (time - h) > dist
+  while (start <= end) {
+    const mid = start + Math.floor((end - start) / 2)
+    if (isWin(mid) && !isWin(mid - 1)) return mid
+    if (isWin(mid - 1) && isWin(mid)) {
+      end = mid - 1
+    } else {
+      start = mid + 1
+    }
+  }
+}
+
 const part1 = (path: string): string | number => {
   const lines = inputHandler.toArray(path, LINE)
   const [times, dists] = lines.map(l =>
@@ -28,30 +43,24 @@ const part1 = (path: string): string | number => {
       .split(/[^\d]+/)
       .map(Number)
   )
-  let s = 1
-  times.forEach((time, i) => {
-    let w = time % 2 !== 0 ? 0 : -1
-    for (let h = Math.floor(time / 2); h >= 1; h--) {
-      if (h * (time - h) <= dists[i]) break
-      w += 2
-    }
-    s *= w
-  })
-  return s
+  return times.reduce((s, time, i) => {
+    const h = binarySearch(time, dists[i])
+    return s * ((time % 2 !== 0 ? +2 : +1) + (h - Math.floor(time / 2)) * -2)
+  }, 1)
 }
 
 const part2 = (path: string): string | number => {
   const lines = inputHandler.toArray(path, LINE)
   const [time, dist] = lines.map(l => l.split(':')[1].trim().split(/\s+/).join('')).map(Number)
-  let wins = time % 2 !== 0 ? 0 : -1 // we double count the time / 2 if time is even so start at -1
-  for (let h = Math.floor(time / 2); h >= 1; h--) {
-    if (h * (time - h) <= dist) break
-    wins += 2
-  }
-  return wins
+  const h = binarySearch(time, dist)!
+  return (time % 2 !== 0 ? +2 : +1) + (h - Math.floor(time / 2)) * -2
+  // for (let h = 1; h <= Math.floor(time / 2); h++) {
+  //   if (h * (time - h) > dist) return (time % 2 !== 0 ? +2 : +1) + (h - Math.floor(time / 2)) * -2
+  // }
+  throw 'impossible'
 }
 
-console.clear()
+// console.clear()
 try {
   bench(logger, 'part 1 example', () => part1(EXAMPLE), 288)
   bench(logger, 'part 1 input', () => part1(INPUT), 4568778)
