@@ -53,7 +53,7 @@ const part2 = (path: string): string | number => {
   // As such we pre-process the maps to minimise repeating arithmetic
   // A major optimisation here is returning a "next" value
   // This is used in the main loop to skip to the end of the range with the least remaining values
-  const get = (level: number, seed: number) => {
+  const get = (level: number, seed: number): { result: number, next: number } => {
     for (const range of maps[level]) {
       if (seed < range[0]) return { result: seed, next: range[0] - seed }
       if (seed <= range[1]) return { result: seed + range[2], next: range[1] - seed }
@@ -73,17 +73,17 @@ const part2 = (path: string): string | number => {
   const seeds = seedLine.match(/\d+/g)!.map(Number)
   const maps = mapLines.map(processMap)
 
+  let skip = Number.MAX_SAFE_INTEGER
   return reshape(seeds, 2).reduce((min, [start, count]) => {
-    for (let seed = start; seed < start + count; seed++) {
+    for (let seed = start; seed < start + count; seed+=skip+1) {
       let key = seed
-      let skip = Number.MAX_SAFE_INTEGER
+      skip = Number.MAX_SAFE_INTEGER
       for (let level = 0; level <= 6; level++) {
         const { result, next } = get(level, key)
         key = result
         skip = Math.min(skip, next)
       }
       min = Math.min(min, key)
-      seed += skip
       // Jump the main loop to the end of the shortest range in our path
       // This line reduces runtime by ~1,000,000x from 272610ms to 0.10ms
     }

@@ -37,10 +37,10 @@ const part2 = (path: string): string | number =>
     .toArray(path, LINE)
     .reduce((cards, card, i) => {
       const m = matches(card)
-      const count = (cards[i] += 1)
+      const count = cards[i]
       range(1, m).forEach(x => (cards[x + i] += count))
       return cards
-    }, new Array(220).fill(0))
+    }, new Array(220).fill(1))
     .reduce(sum)
 
 console.clear()
