@@ -22,7 +22,7 @@ const log = logger.log
 function bSearch(time: number, dist: number) {
   let start = 1
   let end = Math.floor(time / 2)
-  // Find lowest hold value that can still win
+  // Find lowest holdTime value that can still win
   const isWin = (h: number): boolean => h * (time - h) > dist
   while (true) {
     const mid = start + Math.floor((end - start) / 2)
@@ -42,14 +42,13 @@ function bSearch(time: number, dist: number) {
 }
 
 const part1 = (path: string): string | number => {
-  const lines = inH.toArray(path, LINE)
-  const [times, dists] = lines.map(l => l.split(':')[1].trim().split(/\s+/).map(Number))
+  const [times, dists] = inH.toArray(path).map(l => l.split(':')[1].trim().split(/\s+/).map(Number))
   return times.reduce((s, time, i) => s * bSearch(time, dists[i]), 1)
 }
 
 const part2 = (path: string): string | number => {
-  const [time, dist] = inH.toArray(path, LINE).map(l => Number(l.split(':')[1].replace(/\s+/g, '')))
-  return bSearch(time, dist)!
+  const [time, dist] = inH.toArray(path).map(l => Number(l.split(':')[1].replace(/\s+/g, '')))
+  return bSearch(time, dist)
 }
 
 console.clear()
