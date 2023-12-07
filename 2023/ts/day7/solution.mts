@@ -21,111 +21,65 @@ const logger = new Logger()
 const log = logger.log
 
 const part1 = (path: string): string | number => {
-  const isFiveKind = (cards: number[]): boolean => cards[0] === cards[4]
-  const isFourKind = (cards: number[]): boolean => cards[0] === cards[3] || cards[1] === cards[4]
-  const isThreeKind = (cards: number[]): boolean =>
-    cards[0] === cards[2] || cards[1] === cards[3] || cards[2] === cards[4]
-  const isFullHouse = (cards: number[]): boolean => {
-    if (cards[0] === cards[2] && cards[3] === cards[4]) {
-      return true
-    } else if (cards[2] === cards[4] && cards[0] === cards[1]) {
-      return true
-    }
-    return false
+  const getPrimary = cards => {
+    const [a, b, c, d, e] = [...cards].sort(numSort)
+    if (a === e) return 6
+    if (a === d || b === e) return 5
+    if ((a === c && d === e) || (c === e && a === b)) return 4
+    if (a === c || b === d || c === e) return 3
+    if ((b === c && d === e) || (a === b && (c === d || d === e))) return 2
+    return a === b || b === c || c === d || d === e ? 1 : 0
   }
 
-  const countPairs = (cards: number[]): number => {
-    let pairs = 0
-    for (let c = 0; c < cards.length - 1; c++) {
-      if (cards[c] === cards[c + 1]) {
-        pairs++
-        c++
-      }
-    }
-    return pairs
-  }
+  const getSecondary = cards => cards.reduce((s, c, i) => s + c * 15 ** (4 - i), 0)
+
   const lines = inputHandler.toArray(path, LINE).map(l => l.split(' '))
 
-  const getPrimary = cards => {
-    let score
-    if (isFiveKind(cards)) {
-      score = 6
-    } else if (isFourKind(cards)) {
-      score = 5
-    } else if (isThreeKind(cards)) {
-      if (isFullHouse(cards)) {
-        score = 4
-      } else {
-        score = 3
-      }
-    } else {
-      score = countPairs(cards)
-    }
-    return score
-  }
-  const hands = lines.map(l =>
-    l[0]
-      .split('')
-      .map(c =>
-        Number(
-          c
-            .replace('T', '10')
-            .replace('J', '11')
-            .replace('Q', '12')
-            .replace('K', '13')
-            .replace('A', '14')
-        )
-      )
-  )
-
-  const getSecondary = (i: number) => {
-    const sec = hands[i].reduce((s, c, i) => s + c * 15 ** (4 - i), 0)
-    return sec
-  }
-
-  const hands2 = hands
-    .map(h => [...h].sort(numSort))
-    .map((cards, i) => [getPrimary(cards), getSecondary(i), lines[i][1], lines[i][0], hands[i], i])
+  return lines
+    .map(l => [
+      l[0]
+        .split('')
+        .map(c =>
+          Number(
+            c < 10
+              ? c
+              : c
+                  .replace('T', '10')
+                  .replace('J', '11')
+                  .replace('Q', '12')
+                  .replace('K', '13')
+                  .replace('A', '14')
+          )
+        ),
+      l[1],
+    ])
+    .map((cards, i) => [getPrimary(cards[0]), getSecondary(cards[0]), cards[1]])
     .sort((a, b) => (a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]))
-
-  return hands2.reduce((s, hand, i) => {
-    const score = (i + 1) * hand[2]
-    return s + score
-  }, 0)
+    .reduce((s, [, , bet], i) => s + (i + 1) * bet, 0)
 }
 
 const part2 = (path: string): string | number => {
   const getPrimary = hand => {
-    const cards = [...hand].sort(numSort)
-
-    if (cards[0]) {
-      if (cards[0] === cards[4]) return 6
-      if (cards[0] === cards[3] || cards[1] === cards[4]) return 5
-      if (cards[0] === cards[2] || cards[1] === cards[3] || cards[2] === cards[4]) {
-        return (cards[0] === cards[2] && cards[3] === cards[4]) ||
-          (cards[2] === cards[4] && cards[0] === cards[1])
-          ? 4
-          : 3
-      }
-      let pairs = 0
-      for (let c = 0; c < cards.length - 1; c++) {
-        if (cards[c] === cards[c + 1]) pairs++
-      }
-      return pairs
+    const [a, b, c, d, e] = [...hand].sort(numSort)
+    if (a !== 0) {
+      if (a === e) return 6
+      if (a === d || b === e) return 5
+      if ((a === c && d === e) || (c === e && a === b)) return 4
+      if (a === c || b === d || c === e) return 3
+      if ((b === c && d === e) || (a === b && (c === d || d === e))) return 2
+      return a === b || b === c || c === d || d === e ? 1 : 0
     }
-    if (cards[1]) {
-      if (cards[1] === cards[4]) return 6
-      if (cards[1] === cards[3] || cards[2] === cards[4]) return 5
-      if (cards[1] === cards[2] || cards[2] === cards[3] || cards[3] === cards[4])
-        return cards[1] === cards[2] && cards[3] === cards[4] ? 4 : 3
-      return 1
+    if (b !== 0) {
+      if (b === e) return 6
+      if (b === d || c === e) return 5
+      if (b === c && d === e) return 4
+      return b === c || c === d || d === e ? 3 : 1
     }
-    if (cards[2]) {
-      if (cards[2] === cards[4]) return 6
-      return cards[2] === cards[3] || cards[3] === cards[4] ? 5 : 3
+    if (c !== 0) {
+      if (c === e) return 6
+      return c === d || d === e ? 5 : 3
     }
-    if (cards[3]) return cards[3] === cards[4] ? 6 : 5
-    return 6
+    return d === 0 || d === e ? 6 : 5
   }
 
   const getSecondary = cards => cards.reduce((s, c, i) => s + c * 15 ** (4 - i), 0)
