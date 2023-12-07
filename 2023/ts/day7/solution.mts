@@ -8,20 +8,15 @@ import {
   INPUT,
   LINE,
   Logger,
-  range,
-  sum,
-  product,
-  getGrid,
   numSort,
 } from '../helpers/index.mjs'
 
 const inputHandler = new InputHandler(process.cwd())
 
 const logger = new Logger()
-const log = logger.log
 
 const part1 = (path: string): string | number => {
-  const getPrimary = cards => {
+  const getPrimary = (cards: number[]): number => {
     const [a, b, c, d, e] = [...cards].sort(numSort)
     if (a === e) return 6
     if (a === d || b === e) return 5
@@ -31,31 +26,40 @@ const part1 = (path: string): string | number => {
     return a === b || b === c || c === d || d === e ? 1 : 0
   }
 
-  const getSecondary = cards => cards.reduce((s, c, i) => s + c * 15 ** (4 - i), 0)
-
-  const lines = inputHandler.toArray(path, LINE).map(l => l.split(' '))
-
-  return lines
-    .map(l => [
-      l[0]
-        .split('')
-        .map(c =>
-          Number(
-            c < 10
-              ? c
-              : c
-                  .replace('T', '10')
-                  .replace('J', '11')
-                  .replace('Q', '12')
-                  .replace('K', '13')
-                  .replace('A', '14')
-          )
-        ),
-      l[1],
-    ])
-    .map((cards, i) => [getPrimary(cards[0]), getSecondary(cards[0]), cards[1]])
-    .sort((a, b) => (a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]))
-    .reduce((s, [, , bet], i) => s + (i + 1) * bet, 0)
+  return inputHandler
+    .toArray(path, LINE)
+    .map(l => l.split(' '))
+    .map(
+      l =>
+        [
+          l[0]
+            .split('')
+            .map(c =>
+              c < 10
+                ? c
+                : c
+                    .replace('T', '10')
+                    .replace('J', '11')
+                    .replace('Q', '12')
+                    .replace('K', '13')
+                    .replace('A', '14')
+            )
+            .map(Number),
+          Number(l[1]),
+        ] as [number[], number]
+    )
+    .map(cards => cards.concat(getPrimary(cards[0])) as [number[], number, number])
+    .sort((x, y): number => {
+      if (x[2] === y[2]) {
+        for (let i = 0; i < 5; i++) {
+          const a = x[0][i]
+          const b = y[0][i]
+          if (a - b) return a - b
+        }
+      }
+      return x[2] - y[2]
+    })
+    .reduce((s, cards, i) => s + (i + 1) * cards[1], 0)
 }
 
 const part2 = (path: string): string | number => {
@@ -82,30 +86,40 @@ const part2 = (path: string): string | number => {
     return d === 0 || d === e ? 6 : 5
   }
 
-  const getSecondary = cards => cards.reduce((s, c, i) => s + c * 15 ** (4 - i), 0)
-
-  const lines = inputHandler.toArray(path, LINE).map(l => l.split(' '))
-
-  return lines
-    .map(l =>
-      l[0]
-        .split('')
-        .map(c =>
-          Number(
-            c < 10
-              ? c
-              : c
-                  .replace('T', '10')
-                  .replace('J', '0')
-                  .replace('Q', '12')
-                  .replace('K', '13')
-                  .replace('A', '14')
-          )
-        )
+  return inputHandler
+    .toArray(path, LINE)
+    .map(l => l.split(' '))
+    .map(
+      l =>
+        [
+          l[0]
+            .split('')
+            .map(c =>
+              c < 10
+                ? c
+                : c
+                    .replace('T', '10')
+                    .replace('J', '0')
+                    .replace('Q', '12')
+                    .replace('K', '13')
+                    .replace('A', '14')
+            )
+            .map(Number),
+          Number(l[1]),
+        ] as [number[], number]
     )
-    .map((cards, i) => [getPrimary(cards), getSecondary(cards), lines[i][1]])
-    .sort((a, b) => (a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]))
-    .reduce((s, [, , bet], i) => s + (i + 1) * bet, 0)
+    .map(cards => cards.concat(getPrimary(cards[0])) as [number[], number, number])
+    .sort((x, y): number => {
+      if (x[2] === y[2]) {
+        for (let i = 0; i < 5; i++) {
+          const a = x[0][i]
+          const b = y[0][i]
+          if (a - b) return a - b
+        }
+      }
+      return x[2] - y[2]
+    })
+    .reduce((s, cards, i) => s + (i + 1) * cards[1], 0)
 }
 
 console.clear()
