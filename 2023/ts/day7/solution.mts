@@ -20,32 +20,31 @@ const inputHandler = new InputHandler(process.cwd())
 const logger = new Logger()
 const log = logger.log
 
-const isFiveKind = (cards: number[]): boolean => cards[0] === cards[4]
-const isFourKind = (cards: number[]): boolean => cards[0] === cards[3] || cards[1] === cards[4]
-const isThreeKind = (cards: number[]): boolean =>
-  cards[0] === cards[2] || cards[1] === cards[3] || cards[2] === cards[4]
-const isFullHouse = (cards: number[]): boolean => {
-  if (cards[0] === cards[2] && cards[3] === cards[4]) {
-    return true
-  } else if (cards[2] === cards[4] && cards[0] === cards[1]) {
-    return true
-  }
-  return false
-}
-
-const countPairs = (cards: number[]): number => {
-  let pairs = 0
-  for (let c = 0; c < cards.length - 1; c++) {
-    if (cards[c] === cards[c + 1]) {
-      // console.log(cards[c], cards[c + 1], 'match')
-      pairs++
-      c++
-    } //else console.log(cards[c], cards[c + 1], 'no match')
-  }
-  return pairs
-}
-
 const part1 = (path: string): string | number => {
+  const isFiveKind = (cards: number[]): boolean => cards[0] === cards[4]
+  const isFourKind = (cards: number[]): boolean => cards[0] === cards[3] || cards[1] === cards[4]
+  const isThreeKind = (cards: number[]): boolean =>
+    cards[0] === cards[2] || cards[1] === cards[3] || cards[2] === cards[4]
+  const isFullHouse = (cards: number[]): boolean => {
+    if (cards[0] === cards[2] && cards[3] === cards[4]) {
+      return true
+    } else if (cards[2] === cards[4] && cards[0] === cards[1]) {
+      return true
+    }
+    return false
+  }
+
+  const countPairs = (cards: number[]): number => {
+    let pairs = 0
+    for (let c = 0; c < cards.length - 1; c++) {
+      if (cards[c] === cards[c + 1]) {
+        // console.log(cards[c], cards[c + 1], 'match')
+        pairs++
+        c++
+      } //else console.log(cards[c], cards[c + 1], 'no match')
+    }
+    return pairs
+  }
   const lines = inputHandler.toArray(path, LINE).map(l => l.split(' '))
 
   const getPrimary = cards => {
@@ -118,27 +117,140 @@ const part1 = (path: string): string | number => {
 }
 
 const part2 = (path: string): string | number => {
+  const isFiveKind = (cards: number[]): boolean => {
+    if (cards[0]) {
+      // no jokers
+      if (cards[0] === cards[4]) return true
+      return false
+    }
+    if (cards[1]) {
+      // one joker
+      if (cards[1] === cards[4]) return true
+      return false
+    }
+    if (cards[2]) {
+      // two jokers
+      // console.log('found 2 jokers', cards)
+      if (cards[2] === cards[4]) return true
+      return false
+    }
+    if (cards[3]) {
+      // three jokers
+      // console.log('found 3 jokers', cards)
+      if (cards[3] === cards[4]) return true
+      return false
+    }
+    // console.log('4 jokers', cards)
+    return true
+  }
+  const isFourKind = (cards: number[]): boolean => {
+    if (cards[0]) {
+      // no jokers
+      if (cards[0] === cards[3]) return true
+      if (cards[1] === cards[4]) return true
+      return false
+    }
+    if (cards[1]) {
+      // one joker
+      if (cards[1] === cards[3]) return true
+      if (cards[2] === cards[4]) return true
+      return false
+    }
+    if (cards[2]) {
+      // two jokers
+      if (cards[2] === cards[3]) return true
+      if (cards[3] === cards[4]) return true
+      return false
+    }
+    if (cards[3]) return true
+    throw '4 jokers on four of a kind?'
+  }
+  const isThreeKind = (cards: number[]): boolean => {
+    if (cards[0]) {
+      // no jokers
+      if (cards[0] === cards[2]) return true
+      if (cards[1] === cards[3]) return true
+      if (cards[2] === cards[4]) return true
+      return false
+    }
+    if (cards[1]) {
+      // one joker
+      if (cards[1] === cards[2]) return true
+      if (cards[2] === cards[3]) return true
+      if (cards[3] === cards[4]) return true
+      return false
+    }
+    if (cards[2]) return true
+    throw ['3 jokers on three of a kind?', cards]
+  }
+  const isFullHouse = (cards: number[]): boolean => {
+    if (cards[0]) {
+      // no jokers
+      // if (cards[0] === cards[2] && cards[3] === cards[4]) return true
+      // if (cards[2] === cards[4] && cards[0] === cards[1]) return true
+      // return false
+      if (cards[0] === cards[2] && cards[3] === cards[4]) {
+        return true
+      } else if (cards[2] === cards[4] && cards[0] === cards[1]) {
+        return true
+      }
+      return false
+    }
+    if (cards[1]) {
+      if (cards[1] === cards[2] && cards[3] === cards[4]) return true
+      return false
+    }
+    if (cards[2]) {
+      if (cards[2] === cards[3] || cards[3] === cards[4]) return true
+      return false
+    }
+    throw ['3 jokers on full house?', cards]
+    return true
+  }
+
+  const countPairs = (cards: number[]): number => {
+    if (cards[0]) {
+      let pairs = 0
+      for (let c = 0; c < cards.length - 1; c++) {
+        if (cards[c] === cards[c + 1]) {
+          // console.log(cards[c], cards[c + 1], 'match')
+          pairs++
+          c++
+        } //else console.log(cards[c], cards[c + 1], 'no match')
+      }
+      return pairs
+    }
+    if (cards[1]) {
+      for (let c = 0; c < cards.length - 1; c++) {
+        if (cards[c] === cards[c + 1]) return 2
+      }
+      return 1
+    }
+    throw '2 jokers on countPairs?'
+    return 2
+  }
+
   const lines = inputHandler.toArray(path, LINE).map(l => l.split(' '))
 
   const getPrimary = cards => {
     let score
     if (isFiveKind(cards)) {
       score = 6
-      console.log('five of a kind', score)
+      // console.log('five of a kind', score)
     } else if (isFourKind(cards)) {
       score = 5
-      console.log('four of a kind', score)
+      // console.log('four of a kind', score)
     } else if (isThreeKind(cards)) {
       if (isFullHouse(cards)) {
         score = 4
-        console.log('full house', score)
+        // console.log('full house', score)
       } else {
         score = 3
-        console.log('three of a kind', score)
+        // console.log('three of a kind', score)
       }
     } else {
       score = countPairs(cards)
-      console.log('found pairs', score)
+      // console.log('found pairs', score)
     }
     return score
   }
@@ -149,7 +261,7 @@ const part2 = (path: string): string | number => {
         Number(
           c
             .replace('T', '10')
-            .replace('J', '11')
+            .replace('J', '0')
             .replace('Q', '12')
             .replace('K', '13')
             .replace('A', '14')
@@ -178,13 +290,13 @@ const part2 = (path: string): string | number => {
     ])
     .sort((a, b) => (a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]))
 
-  console.log(secInner([10, 10, 11, 11, 13]))
-  console.log(secInner([6, 7, 7, 13, 13]))
+  // console.log(secInner([10, 10, 11, 11, 13]))
+  // console.log(secInner([6, 7, 7, 13, 13]))
   // console.log(hands[1], hands2[1])
 
   return hands2.reduce((s, hand, i) => {
     const score = (i + 1) * hand[2]
-    console.log(i + 1, hand[2], hand)
+    // console.log(i + 1, hand[2], hand)
     return s + score
   }, 0)
 }
@@ -193,8 +305,8 @@ console.clear()
 try {
   bench(logger, 'part 1 example', () => part1(EXAMPLE), 6440)
   bench(logger, 'part 1 input', () => part1(INPUT), 250946742)
-  bench(logger, 'part 2 example', () => part2(EXAMPLE), 0)
-  bench(logger, 'part 2 input', () => part2(INPUT), 0)
+  bench(logger, 'part 2 example', () => part2(EXAMPLE), 5905)
+  bench(logger, 'part 2 input', () => part2(INPUT), 251824095)
 } catch (e) {
   console.log(e)
 }
