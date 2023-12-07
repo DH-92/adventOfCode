@@ -95,51 +95,37 @@ const part1 = (path: string): string | number => {
 }
 
 const part2 = (path: string): string | number => {
-  const isFiveKind = (cards: number[]): boolean => {
-    if (cards[0]) return cards[0] === cards[4]
-    if (cards[1]) return cards[1] === cards[4]
-    if (cards[2]) return cards[2] === cards[4]
-    return !cards[3] || cards[3] === cards[4]
-  }
-  const isFourKind = (cards: number[]): boolean => {
-    if (cards[0]) return cards[0] === cards[3] || cards[1] === cards[4]
-    if (cards[1]) return cards[1] === cards[3] || cards[2] === cards[4]
-    if (cards[2]) return cards[2] === cards[3] || cards[3] === cards[4]
-    return !!cards[3]
-  }
-  const isThreeKind = (cards: number[]): boolean => {
-    if (cards[0]) return cards[0] === cards[2] || cards[1] === cards[3] || cards[2] === cards[4]
-    if (cards[1]) return cards[1] === cards[2] || cards[2] === cards[3] || cards[3] === cards[4]
-    return !!cards[2]
-  }
-  const isFullHouse = (cards: number[]): boolean => {
-    if (cards[0])
-      return (
-        (cards[0] === cards[2] && cards[3] === cards[4]) ||
-        (cards[2] === cards[4] && cards[0] === cards[1])
-      )
-    if (cards[1]) return cards[1] === cards[2] && cards[3] === cards[4]
-    return !cards[2] || cards[2] === cards[3] || cards[3] === cards[4]
-  }
-
-  const countPairs = (cards: number[]): number => {
-    if (cards[0] === 0) return 1
-    let pairs = 0
-    for (let c = 0; c < cards.length - 1; c++) {
-      if (cards[c] === cards[c + 1]) {
-        pairs++
-        c++
-      }
-    }
-    return pairs
-  }
-
   const getPrimary = hand => {
     const cards = [...hand].sort(numSort)
-    if (isFiveKind(cards)) return 6
-    if (isFourKind(cards)) return 5
-    if (isThreeKind(cards)) return isFullHouse(cards) ? 4 : 3
-    return countPairs(cards)
+
+    if (cards[0]) {
+      if (cards[0] === cards[4]) return 6
+      if (cards[0] === cards[3] || cards[1] === cards[4]) return 5
+      if (cards[0] === cards[2] || cards[1] === cards[3] || cards[2] === cards[4]) {
+        return (cards[0] === cards[2] && cards[3] === cards[4]) ||
+          (cards[2] === cards[4] && cards[0] === cards[1])
+          ? 4
+          : 3
+      }
+      let pairs = 0
+      for (let c = 0; c < cards.length - 1; c++) {
+        if (cards[c] === cards[c + 1]) pairs++
+      }
+      return pairs
+    }
+    if (cards[1]) {
+      if (cards[1] === cards[4]) return 6
+      if (cards[1] === cards[3] || cards[2] === cards[4]) return 5
+      if (cards[1] === cards[2] || cards[2] === cards[3] || cards[3] === cards[4])
+        return cards[1] === cards[2] && cards[3] === cards[4] ? 4 : 3
+      return 1
+    }
+    if (cards[2]) {
+      if (cards[2] === cards[4]) return 6
+      return cards[2] === cards[3] || cards[3] === cards[4] ? 5 : 3
+    }
+    if (cards[3]) return cards[3] === cards[4] ? 6 : 5
+    return 6
   }
 
   const getSecondary = cards => cards.reduce((s, c, i) => s + c * 15 ** (4 - i), 0)
