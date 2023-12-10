@@ -70,6 +70,7 @@ const buildGrid = lines => {
       }
     })
   })
+  buildStart(grid, start)
   return [grid, start]
 }
 
@@ -77,53 +78,52 @@ const buildStart = (grid, start) => {
   const x = start.x
   const y = start.y
   const toAdd: Node[] = []
-  const u = grid[y - 1][x]
-  const d = grid[y + 1][x]
-  const l = grid[y][x - 1]
-  const r = grid[y][x + 1]
-  if (u) {
-    if (u.prev === start) {
-      toAdd.push(u)
-    } else if (u.next === start) {
-      toAdd.push(u)
+  const up = grid[y - 1][x]
+  const down = grid[y + 1][x]
+  const left = grid[y][x - 1]
+  const right = grid[y][x + 1]
+  if (up) {
+    if (up.prev === start) {
+      toAdd.push(up)
+    } else if (up.next === start) {
+      toAdd.push(up)
     }
   }
-  if (l) {
-    if (l.prev === start) {
-      toAdd.push(l)
-    } else if (l.next === start) {
-      toAdd.push(l)
+  if (down) {
+    if (down.prev === start) {
+      toAdd.push(down)
+    } else if (down.next === start) {
+      toAdd.push(down)
     }
   }
-  if (r) {
-    if (r.prev === start) {
-      toAdd.push(r)
-    } else if (r.next === start) {
-      toAdd.push(r)
+  if (left) {
+    if (left.prev === start) {
+      toAdd.push(left)
+    } else if (left.next === start) {
+      toAdd.push(left)
     }
   }
-  if (d) {
-    if (d.prev === start) {
-      toAdd.push(d)
-    } else if (d.next === start) {
-      toAdd.push(d)
+  if (right) {
+    if (right.prev === start) {
+      toAdd.push(right)
+    } else if (right.next === start) {
+      toAdd.push(right)
     }
   }
+
   start.dist = 0
   start.prev = toAdd[0]
   start.next = toAdd[1]
-  if (toAdd.includes(u) && toAdd.includes(l)) start.val === 'J'
-  if (toAdd.includes(u) && toAdd.includes(d)) start.val === '|'
-  if (toAdd.includes(u) && toAdd.includes(r)) start.val === 'L'
-  if (toAdd.includes(d) && toAdd.includes(l)) start.val === '7'
-  if (toAdd.includes(d) && toAdd.includes(r)) start.val === 'F'
-  if (toAdd.includes(r) && toAdd.includes(l)) start.val === '-'
+  if (toAdd.includes(up) && toAdd.includes(left)) start.val === 'J'
+  if (toAdd.includes(up) && toAdd.includes(down)) start.val === '|'
+  if (toAdd.includes(up) && toAdd.includes(right)) start.val === 'L'
+  if (toAdd.includes(down) && toAdd.includes(left)) start.val === '7'
+  if (toAdd.includes(down) && toAdd.includes(right)) start.val === 'F'
+  if (toAdd.includes(right) && toAdd.includes(left)) start.val === '-'
 }
 
 const part1 = (path: string): string | number => {
-  const [grid, start] = buildGrid(inputHandler.toArray(path))
-  buildStart(grid, start)
-
+  const [, start] = buildGrid(inputHandler.toArray(path))
   let farthest: number = 0
   let pending: Node[] = [start]
   while (pending.length) {
@@ -132,11 +132,11 @@ const part1 = (path: string): string | number => {
     const next = curr.next!
     const dist = curr.dist + 1
     farthest = curr.dist
-    if (prev.dist > dist) {
+    if (prev.dist > farthest) {
       prev.dist = dist
       pending.push(prev)
     }
-    if (next.dist > dist) {
+    if (next.dist > farthest) {
       next.dist = dist
       pending.push(next)
     }
@@ -146,38 +146,28 @@ const part1 = (path: string): string | number => {
 
 const part2 = (path: string): string | number => {
   const [grid, start] = buildGrid(inputHandler.toArray(path))
-  buildStart(grid, start)
 
-  const grid2 = getGrid(() => false, grid.length, grid[0].length)
-  start.dist = 0
-  let pending: Node[] = [start]
-  while (pending.length) {
-    const curr = pending.shift()!
-    const x = curr.x
-    const y = curr.y
-    grid2[y][x] = true
-    const prev = curr.prev!
-    const next = curr.next!
-    const dist = curr.dist + 1
-    if (prev.dist > dist) {
-      prev.dist = dist
-      pending.push(prev)
-    }
-    if (next.dist > dist) {
-      next.dist = dist
-      pending.push(next)
-    }
+  const grid2: Array<boolean | string>[] = getGrid(() => false, grid.length, grid[0].length)
+  let pending: Node = start
+  while (true) {
+    const x = pending.x
+    const y = pending.y
+    grid2[y][x] = pending.val!
+    const next = pending.next!
+    if (next === start) break
+    if (next.next === pending) next.next = next.prev
+    pending = next
   }
-  let sum = 0
-  grid2.forEach((l, y) => {
+
+  return grid2.reduce((sum, line) => {
     let inside = false
     let dir = false
-    l.forEach((c, x) => {
-      if (!c) {
+    line.forEach(char => {
+      if (!char) {
         if (inside) sum++
         return
       }
-      switch (grid[y][x].val) {
+      switch (char) {
         case '|':
           inside = !inside
           break
@@ -195,8 +185,8 @@ const part2 = (path: string): string | number => {
           break
       }
     })
-  })
-  return sum
+    return sum
+  }, 0)
 }
 
 console.clear()
