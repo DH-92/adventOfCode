@@ -5,11 +5,8 @@ import {
   InputHandler,
   EXAMPLE,
   INPUT,
-  LINE,
-  sum,
   bench,
   Logger,
-  range,
   getGrid,
 } from '../helpers/index.mjs'
 
@@ -19,261 +16,196 @@ const logger = new Logger()
 const log = logger.log
 
 class Node {
-  // x: number
-  // y: number
-  pos: string
-  val: string
+  x: number
+  y: number
+  val?: string
   dist: number = Number.MAX_SAFE_INTEGER
-  left?: Node
-  right?: Node
+  prev?: Node
+  next?: Node
 }
 
-const part1 = (path: string): string | number => {
-  const lines = inputHandler.toArray(path)
-  const grid = getGrid(() => new Node(), lines.length + 5, lines[0].length + 5)
+const buildGrid = lines => {
+  const grid: Node[][] = getGrid(() => new Node(), lines.length + 2, lines[0].length + 2)
   let start
   lines.forEach((l, yy) => {
     l.split('').forEach((c, xx) => {
       const y = yy + 1
       const x = xx + 1
       if (c === '.') {
-        grid[y][x] = '.'
+        delete grid[y][x]
         return
       }
       const node = grid[y][x]
-      node.pos = `${y},${x}`
+      node.y = y
+      node.x = x
       node.val = c
-      if (c === 'S') {
-        start = node
-      }
-      // console.log(node)
-      if (c === '|') {
-        node.left = grid[y - 1][x]
-        node.right = grid[y + 1][x]
-      }
-      if (c === '-') {
-        node.left = grid[y][x - 1]
-        node.right = grid[y][x + 1]
-      }
-      if (c === 'F') {
-        node.left = grid[y + 1][x]
-        node.right = grid[y][x + 1]
-      }
-      if (c === 'L') {
-        grid[y][x].left = grid[y - 1][x]
-        grid[y][x].right = grid[y][x + 1]
-      }
-      if (c === '7') {
-        node.left = grid[y][x - 1]
-        node.right = grid[y + 1][x]
-      }
-      if (c === 'J') {
-        node.left = grid[y - 1][x]
-        node.right = grid[y][x - 1]
+      switch (c) {
+        case 'S':
+          start = node
+          break
+        case '|':
+          node.prev = grid[y - 1][x]
+          node.next = grid[y + 1][x]
+          break
+        case '-':
+          node.prev = grid[y][x - 1]
+          node.next = grid[y][x + 1]
+          break
+        case 'F':
+          node.prev = grid[y + 1][x]
+          node.next = grid[y][x + 1]
+          break
+        case 'L':
+          node.prev = grid[y - 1][x]
+          node.next = grid[y][x + 1]
+          break
+        case '7':
+          node.prev = grid[y][x - 1]
+          node.next = grid[y + 1][x]
+          break
+        case 'J':
+          node.prev = grid[y - 1][x]
+          node.next = grid[y][x - 1]
+          break
       }
     })
   })
-  const [y, x] = start.pos.split(',').map(Number)
-  const toAdd = []
-  if (grid[y - 1][x] !== '.') {
-    if (grid[y - 1][x].left === start) {
-      toAdd.push(grid[y - 1][x])
-    }
-    if (grid[y - 1][x].right === start) {
-      toAdd.push(grid[y - 1][x])
-    }
-  }
-  if (grid[y][x - 1] !== '.') {
-    if (grid[y][x - 1].left === start) {
-      toAdd.push(grid[y][x - 1])
-    }
-    if (grid[y][x - 1].right === start) {
-      toAdd.push(grid[y][x - 1])
-    }
-  }
-  if (grid[y][x + 1] !== '.') {
-    if (grid[y][x + 1].left === start) {
-      toAdd.push(grid[y][x + 1])
-    }
-    if (grid[y][x + 1].right === start) {
-      toAdd.push(grid[y][x + 1])
+  return [grid, start]
+}
+
+const buildStart = (grid, start) => {
+  const x = start.x
+  const y = start.y
+  const toAdd: Node[] = []
+  const u = grid[y - 1][x]
+  const d = grid[y + 1][x]
+  const l = grid[y][x - 1]
+  const r = grid[y][x + 1]
+  if (u) {
+    if (u.prev === start) {
+      toAdd.push(u)
+    } else if (u.next === start) {
+      toAdd.push(u)
     }
   }
-  if (grid[y + 1][x] !== '.') {
-    if (grid[y + 1][x].left === start) {
-      toAdd.push(grid[y + 1][x])
-    }
-    if (grid[y + 1][x].right === start) {
-      toAdd.push(grid[y + 1][x])
+  if (l) {
+    if (l.prev === start) {
+      toAdd.push(l)
+    } else if (l.next === start) {
+      toAdd.push(l)
     }
   }
-  if (toAdd.length != 2) throw 'TO ADD FOUND TOO MANY'
-  start.left = toAdd[0]
-  start.right = toAdd[1]
+  if (r) {
+    if (r.prev === start) {
+      toAdd.push(r)
+    } else if (r.next === start) {
+      toAdd.push(r)
+    }
+  }
+  if (d) {
+    if (d.prev === start) {
+      toAdd.push(d)
+    } else if (d.next === start) {
+      toAdd.push(d)
+    }
+  }
   start.dist = 0
-  let curr = start
-  let toDo = []
-  let farthest
-  while (true) {
-    const l = curr.left
-    const r = curr.right
-    const d = curr.dist + 1
-    farthest = curr
-    if (l.dist > d) {
-      l.dist = d
-      toDo.push(l)
+  start.prev = toAdd[0]
+  start.next = toAdd[1]
+  if (toAdd.includes(u) && toAdd.includes(l)) start.val === 'J'
+  if (toAdd.includes(u) && toAdd.includes(d)) start.val === '|'
+  if (toAdd.includes(u) && toAdd.includes(r)) start.val === 'L'
+  if (toAdd.includes(d) && toAdd.includes(l)) start.val === '7'
+  if (toAdd.includes(d) && toAdd.includes(r)) start.val === 'F'
+  if (toAdd.includes(r) && toAdd.includes(l)) start.val === '-'
+}
+
+const part1 = (path: string): string | number => {
+  const [grid, start] = buildGrid(inputHandler.toArray(path))
+  buildStart(grid, start)
+
+  let farthest: number = 0
+  let pending: Node[] = [start]
+  while (pending.length) {
+    const curr = pending.shift()!
+    const prev = curr.prev!
+    const next = curr.next!
+    const dist = curr.dist + 1
+    farthest = curr.dist
+    if (prev.dist > dist) {
+      prev.dist = dist
+      pending.push(prev)
     }
-    if (r.dist > d) {
-      r.dist = d
-      toDo.push(r)
+    if (next.dist > dist) {
+      next.dist = dist
+      pending.push(next)
     }
-    if (toDo.length === 0) break
-    curr = toDo.shift()
   }
-  return farthest.dist
+  return farthest
 }
 
 const part2 = (path: string): string | number => {
-  const lines = inputHandler.toArray(path)
-  const grid = getGrid(() => new Node(), lines.length + 2, lines[0].length + 2)
-  const grid2 = getGrid(() => '', lines.length + 2, lines[0].length + 2)
-  let start = grid[42][112]
-  lines.forEach((l, yy) => {
-    l.split('').forEach((c, xx) => {
-      const y = yy + 1
-      const x = xx + 1
-      if (c === '.') {
-        grid[y][x] = '.'
-        grid2[y][x] = '.'
-        return
-      }
-      const node = grid[y][x]
-      node.pos = `${y},${x}`
-      node.val = c
-      if (c === 'S') {
-        start = node
-      }
-      // console.log(node)
-      if (c === '|') {
-        node.left = grid[y - 1][x]
-        node.right = grid[y + 1][x]
-      }
-      if (c === '-') {
-        node.left = grid[y][x - 1]
-        node.right = grid[y][x + 1]
-      }
-      if (c === 'F') {
-        node.left = grid[y + 1][x]
-        node.right = grid[y][x + 1]
-      }
-      if (c === 'L') {
-        grid[y][x].left = grid[y - 1][x]
-        grid[y][x].right = grid[y][x + 1]
-      }
-      if (c === '7') {
-        node.left = grid[y][x - 1]
-        node.right = grid[y + 1][x]
-      }
-      if (c === 'J') {
-        node.left = grid[y - 1][x]
-        node.right = grid[y][x - 1]
-      }
-    })
-  })
-  const [y, x] = start.pos.split(',').map(Number)
-  const toAdd = []
-  if (grid[y - 1][x] !== '.') {
-    if (grid[y - 1][x].left === start) {
-      toAdd.push(grid[y - 1][x])
-    }
-    if (grid[y - 1][x].right === start) {
-      toAdd.push(grid[y - 1][x])
-    }
-  }
-  if (grid[y][x - 1] !== '.') {
-    if (grid[y][x - 1].left === start) {
-      toAdd.push(grid[y][x - 1])
-    }
-    if (grid[y][x - 1].right === start) {
-      toAdd.push(grid[y][x - 1])
-    }
-  }
-  if (grid[y][x + 1] !== '.') {
-    if (grid[y][x + 1].left === start) {
-      toAdd.push(grid[y][x + 1])
-    }
-    if (grid[y][x + 1].right === start) {
-      toAdd.push(grid[y][x + 1])
-    }
-  }
-  if (grid[y + 1][x] !== '.') {
-    if (grid[y + 1][x].left === start) {
-      toAdd.push(grid[y + 1][x])
-    }
-    if (grid[y + 1][x].right === start) {
-      toAdd.push(grid[y + 1][x])
-    }
-  }
-  if (toAdd.length != 2) throw 'TO ADD FOUND TOO MANY'
-  start.left = toAdd[0]
-  start.right = toAdd[1]
+  const [grid, start] = buildGrid(inputHandler.toArray(path))
+  buildStart(grid, start)
+
+  const grid2 = getGrid(() => false, grid.length, grid[0].length)
   start.dist = 0
-  let curr = start
-  let toDo = []
-  let farthest
-  while (true) {
-    const [y, x] = curr.pos.split(',').map(Number)
-    grid2[y][x] = '#'
-    const l = curr.left
-    const r = curr.right
-    const d = curr.dist + 1
-    farthest = curr
-    if (l.dist > d) {
-      l.dist = d
-      toDo.push(l)
+  let pending: Node[] = [start]
+  while (pending.length) {
+    const curr = pending.shift()!
+    const x = curr.x
+    const y = curr.y
+    grid2[y][x] = true
+    const prev = curr.prev!
+    const next = curr.next!
+    const dist = curr.dist + 1
+    if (prev.dist > dist) {
+      prev.dist = dist
+      pending.push(prev)
     }
-    if (r.dist > d) {
-      r.dist = d
-      toDo.push(r)
+    if (next.dist > dist) {
+      next.dist = dist
+      pending.push(next)
     }
-    if (toDo.length === 0) break
-    curr = toDo.shift()
   }
-  console.table(grid2)
-  let inside = 0
+  let sum = 0
   grid2.forEach((l, y) => {
-    let state = false
-    let dir
+    let inside = false
+    let dir = false
     l.forEach((c, x) => {
-      if (c === '#') {
-        const v = grid[y][x].val
-        if (v === '|') state = !state
-        if (v === 'L') dir = 'up'
-        if (v === 'J') state = dir === 'up' ? state : !state
-        if (v === 'F') dir = 'down'
-        if (v === '7') state = dir === 'down' ? state : !state
-        grid2[y][x] = v
+      if (!c) {
+        if (inside) sum++
         return
       }
-      if (state) {
-        grid2[y][x] = 'I'
-        inside++
-        return
+      switch (grid[y][x].val) {
+        case '|':
+          inside = !inside
+          break
+        case 'L':
+          dir = true
+          break
+        case 'J':
+          inside = dir ? inside : !inside
+          break
+        case 'F':
+          dir = false
+          break
+        case '7':
+          inside = dir ? !inside : inside
+          break
       }
-      grid2[y][x] = 'O'
     })
   })
-  // console.table(grid2)
-  grid2.forEach(l => console.log(l.join('')))
-  return inside
+  return sum
 }
 
 console.clear()
 try {
-  // bench(logger, 'part 1 example', () => part1(EXAMPLE), 4)
-  // bench(logger, 'part 1 input', () => part1(INPUT), 6649)
-  // bench(logger, 'part 2 example', () => part2('example2.txt'), 10)
-  bench(logger, 'part 2 input', () => part2(INPUT), 6649)
+  bench(logger, 'part 1 example', () => part1(EXAMPLE), 4)
+  bench(logger, 'part 1 input', () => part1(INPUT), 6649)
+  bench(logger, 'part 2 example', () => part2(EXAMPLE), 1)
+  bench(logger, 'part 2 example', () => part2('example2.txt'), 10)
+  bench(logger, 'part 2 input', () => part2(INPUT), 601)
 } catch (e) {
   console.error(e)
 }
