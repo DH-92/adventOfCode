@@ -33,7 +33,7 @@ export class Logger {
 
 export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T) {
   const start = performance.now()
-  for (let i = 0; i < 999; i++) func()
+  // for (let i = 0; i < 99; i++) func()
   const result = func()
   const end = performance.now()
 

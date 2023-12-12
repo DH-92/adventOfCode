@@ -73,15 +73,12 @@ const part2 = (path: string): string | number => {
     }
   })
 
-  let sum = 0
-  for (let n = 0; n < nodes.length; n++) {
-    for (let nn = n + 1; nn < nodes.length; nn++) {
-      const a = nodes[n]
-      const b = nodes[nn]
-      sum += Math.abs(a.xx - b.xx) + Math.abs(a.yy - b.yy)
+  return nodes.reduce((s, n, i) => {
+    for (let nn = i + 1; nn < nodes.length; nn++) {
+      s += Math.abs(n.xx - nodes[nn].xx) + Math.abs(n.yy - nodes[nn].yy)
     }
-  }
-  return sum
+    return s
+  }, 0)
 }
 
 console.clear()
