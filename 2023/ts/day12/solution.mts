@@ -76,14 +76,18 @@ const part2 = (path: string): string | number => {
       const [ll, nn] = line.split(/\s+/)
       const dots = `${ll}?${ll}?${ll}?${ll}?${ll}`.split('')
       const groups = `${nn},${nn},${nn},${nn},${nn}`.split(',').map(Number)
-
+      const gRemaining = groups.map((_, i) => {
+        let sum = 0
+        for (let g = i; g < groups.length; g++) sum += groups[g] + 1
+        return sum
+      })
       const DP = {}
       const solve = (pos: number = 0, groupId: number = 0, groupPos: number = 0): number => {
         const key = JSON.stringify({ pos, groupId, groupPos })
         if (DP[key] !== undefined) return DP[key]
-        const endOfString = pos === dots.length
+        const remaining = dots.length - pos
         const notInBlock = groupPos === 0
-        if (endOfString) {
+        if (!remaining) {
           const noBlocksRemaining = groupId == groups.length
           // ###.### matches ???.### 3,3
           if (noBlocksRemaining && notInBlock) return 1
@@ -97,6 +101,7 @@ const part2 = (path: string): string | number => {
           // eg ###...## fails ???.###. 3,3
           return 0
         }
+        if (remaining < gRemaining[groupId + 1]) return 0
         const dot = dots[pos]
         const next = pos + 1
         if (dot === '#') return (DP[key] = solve(next, groupId, groupPos + 1))
