@@ -7,8 +7,7 @@ import {
   INPUT,
   bench,
   Logger,
-  transpose,
-  range,
+  sum,
 } from '../helpers/index.mjs'
 
 const inputHandler = new InputHandler(process.cwd())
@@ -18,67 +17,118 @@ const log = logger.log
 
 const part1 = (path: string): string | number => {
   const lines = inputHandler.toArray(path)
-  // const lines = [inputHandler.toArray(path).at(-1)]
-  let sum = 0
-  lines.forEach(line => {
-    const [l, n] = line.split(' ')
-    const xx = l.split('')
-    const groups = n.split(',').map(Number)
-    // console.log(xx, groups)
-    // console.log(xx.join(''))
-    // console.log(groups)
-    const qs = l.split('?').length - 1
-    // console.log(qs)
-    for (let c = 0; c < 2 ** qs; c++) {
-      const xy = [...xx]
-      let qq = 0
-      for (let i = 0; i < xx.length; i++) {
-        if (xx[i] !== '?') {
-          xy[i] == xx[i]
-          continue
+  return lines
+    .map(line => {
+      const [ll, nn] = line.split(/\s+/)
+      const dots = ll.split('')
+      const groups = nn.split(',').map(Number)
+
+      const DP = {}
+      const solve = (pos: number = 0, groupId: number = 0, groupPos: number = 0): number => {
+        const key = JSON.stringify({ pos, groupId, groupPos })
+        if (DP[key] !== undefined) return DP[key]
+        const endOfString = pos === dots.length
+        const notInBlock = groupPos === 0
+        if (endOfString) {
+          const noBlocksRemaining = groupId == groups.length
+          // ###.### matches ???.### 3,3
+          if (noBlocksRemaining && notInBlock) return 1
+          const inLastBlock = groupId == groups.length - 1
+          const atEndOfBlock = groups[groupId] == groupPos
+          // ###.###. matches ???.###. 3,3
+          if (inLastBlock && atEndOfBlock) return 1
+          // Could be untouched blocks left
+          // eg ###..... fails ???.###. 3,3
+          // or or not at end of block so invalid
+          // eg ###...## fails ???.###. 3,3
+          return 0
         }
-        xy[i] = (c >> qq) % 2 ? '#' : '.'
-        qq++
+        const dot = dots[pos]
+        const next = pos + 1
+        if (dot === '#') return (DP[key] = solve(next, groupId, groupPos + 1))
+        const notLastBlock = groupId < groups.length
+        const isEndOfBlock = groups[groupId] == groupPos
+        if (dot === '?') {
+          // Test adding a '#'
+          const ans = solve(next, groupId, groupPos + 1)
+          // Test adding a '.'
+          if (notInBlock) return (DP[key] = solve(next, groupId) + ans)
+          // In a block so only add '.' if at the end of it
+          if (notLastBlock && isEndOfBlock) return (DP[key] = solve(next, groupId + 1) + ans)
+          // Can't add '.' so return results of only '#'
+          return (DP[key] = ans)
+        }
+        // else dot === "."
+        if (notInBlock) return (DP[key] = solve(next, groupId))
+        if (notLastBlock && isEndOfBlock) return (DP[key] = solve(next, groupId + 1))
+        // We're in a block that we expect to continue so can't add a '.'
+        return (DP[key] = 0)
       }
-      // console.log(c, xy.join(''))
-      const xz = xy
-        .join('')
-        .split('.')
-        .filter(x => x.length)
-      // console.log(groups)
-      // console.log(xz)
-      const test =
-        groups.length === xz.length && groups.every((group, i) => group === xz[i]?.length)
-      if (test) sum++
-      // if (test) console.log('!!!!', xy.join(''))
-      // console.log(xz.map(x => x.length))
-      // console.log(test)
-      // console.log(xz)
-      // console.log(xy.join(''))
-    }
-    console.log(l, sum)
-    // process.exit(1)
-  })
-
-  // console.log(sum)
-
-  // return sum
+      return solve()
+    })
+    .reduce(sum)
 }
 
 const part2 = (path: string): string | number => {
   const lines = inputHandler.toArray(path)
-  const grid = lines.map(l => l.split(''))
-  const line = lines[0]
-  console.log(line)
-  return line
+  return lines
+    .map(line => {
+      const [ll, nn] = line.split(/\s+/)
+      const dots = `${ll}?${ll}?${ll}?${ll}?${ll}`.split('')
+      const groups = `${nn},${nn},${nn},${nn},${nn}`.split(',').map(Number)
+
+      const DP = {}
+      const solve = (pos: number = 0, groupId: number = 0, groupPos: number = 0): number => {
+        const key = JSON.stringify({ pos, groupId, groupPos })
+        if (DP[key] !== undefined) return DP[key]
+        const endOfString = pos === dots.length
+        const notInBlock = groupPos === 0
+        if (endOfString) {
+          const noBlocksRemaining = groupId == groups.length
+          // ###.### matches ???.### 3,3
+          if (noBlocksRemaining && notInBlock) return 1
+          const inLastBlock = groupId == groups.length - 1
+          const atEndOfBlock = groups[groupId] == groupPos
+          // ###.###. matches ???.###. 3,3
+          if (inLastBlock && atEndOfBlock) return 1
+          // Could be untouched blocks left
+          // eg ###..... fails ???.###. 3,3
+          // or or not at end of block so invalid
+          // eg ###...## fails ???.###. 3,3
+          return 0
+        }
+        const dot = dots[pos]
+        const next = pos + 1
+        if (dot === '#') return (DP[key] = solve(next, groupId, groupPos + 1))
+        const notLastBlock = groupId < groups.length
+        const isEndOfBlock = groups[groupId] == groupPos
+        if (dot === '?') {
+          // Test adding a '#'
+          const ans = solve(next, groupId, groupPos + 1)
+          // Test adding a '.'
+          if (notInBlock) return (DP[key] = solve(next, groupId) + ans)
+          // In a block so only add '.' if at the end of it
+          if (notLastBlock && isEndOfBlock) return (DP[key] = solve(next, groupId + 1) + ans)
+          // Can't add '.' so return results of only '#'
+          return (DP[key] = ans)
+        }
+        // else dot === "."
+        if (notInBlock) return (DP[key] = solve(next, groupId))
+        if (notLastBlock && isEndOfBlock) return (DP[key] = solve(next, groupId + 1))
+        // We're in a block that we expect to continue so can't add a '.'
+        return (DP[key] = 0)
+      }
+      return solve()
+    })
+    .reduce(sum)
 }
 
 console.clear()
 try {
-  // bench(logger, 'part 1 example', () => part1(EXAMPLE), 21)
-  bench(logger, 'part 1 input', () => part1(INPUT), 0)
-  // bench(logger, 'part 2 example', () => part2(EXAMPLE), 0)
-  // bench(logger, 'part 2 input', () => part2(INPUT), 0)
+  bench(logger, 'part 1 example', () => part1(EXAMPLE), 21)
+  bench(logger, 'part 1 input', () => part1(INPUT), 7922)
+  bench(logger, 'part 2 example', () => part2(EXAMPLE), 525152)
+  bench(logger, 'part 2 input', () => part2(INPUT), 18093821750095)
 } catch (e) {
   console.error(e)
 }
