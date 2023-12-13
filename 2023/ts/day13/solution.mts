@@ -23,19 +23,20 @@ const part1 = (path: string): string | number =>
     .map(group => {
       const rows = group.split(/\n/)
       const cols = transpose(rows.map(l => l.split(''))).map(l => l.join(''))
-      for (const [dirIdx, lines] of [rows, cols].entries()) {
-        for (let mp = 0; mp < lines.length - 1; mp++) {
+      for (const [dirIdx, lines] of [cols, rows].entries()) {
+        for (let i = 0; i < lines.length - 1; i++) {
           let chips = 0
-          for (let i = mp; i >= 0; i--) {
-            const ii = 1 + mp + (mp - i)
-            if (ii >= lines.length) break
-            const diffs = [...lines[i]].reduce((s, c, ci) => (s += c !== lines[ii][ci] ? 1 : 0), 0)
+          for (let j = 0; j <= i; j++) {
+            const a = lines[i - j]
+            const b = lines[i + 1 + j]
+            if (b === undefined) break
+            const diffs = [...a].reduce((s, c, ci) => (s += c !== b[ci] ? 1 : 0), 0)
             if (diffs) {
               chips++
               break
             }
           }
-          if (!chips) return (1 + mp) * (dirIdx ? 1 : 100)
+          if (!chips) return (1 + i) * (dirIdx ? 100 : 1)
         }
       }
     })
