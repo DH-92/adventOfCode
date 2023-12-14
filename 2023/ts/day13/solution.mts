@@ -24,19 +24,14 @@ const part1 = (path: string): string | number =>
       const rows = group.split(/\n/)
       const cols = transpose(rows.map(l => l.split(''))).map(l => l.join(''))
       for (const [dirIdx, lines] of [cols, rows].entries()) {
-        for (let i = 0; i < lines.length - 1; i++) {
-          let chips = 0
+        i: for (let i = 0; i < lines.length - 1; i++) {
           for (let j = 0; j <= i; j++) {
             const a = lines[i - j]
             const b = lines[i + 1 + j]
             if (b === undefined) break
-            const diffs = [...a].reduce((s, c, ci) => (s += c !== b[ci] ? 1 : 0), 0)
-            if (diffs) {
-              chips++
-              break
-            }
+            if (a !== b) continue i
           }
-          if (!chips) return (1 + i) * (dirIdx ? 100 : 1)
+          return (1 + i) * (dirIdx ? 100 : 1)
         }
       }
     })
@@ -48,22 +43,24 @@ const part2 = (path: string): string | number =>
     .map(group => {
       const rows = group.split(/\n/)
       const cols = transpose(rows.map(l => l.split(''))).map(l => l.join(''))
-      for (const [dirIdx, lines] of [cols, rows].entries()) {
-        for (let i = 0; i < lines.length; i++) {
-          let smudges = 0
-          let chips = 0
+      for (const [lines, multi] of [
+        [cols, 1],
+        [rows, 100],
+      ]) {
+        i: for (let i = 0; i < lines.length; i++) {
+          let smudges = false
           for (let j = 0; j <= i; j++) {
             const a = lines[i - j]
             const b = lines[i + 1 + j]
             if (b === undefined) break
             const diffs = [...a].reduce((s, c, ci) => (s += c !== b[ci] ? 1 : 0), 0)
-            if (diffs > 1) {
-              chips++
-              break
+            if (diffs > 1) continue i
+            if (diffs) {
+              if (smudges) continue i
+              smudges = true
             }
-            if (diffs === 1) smudges++
           }
-          if (!chips && smudges === 1) return (1 + i) * (dirIdx ? 100 : 1)
+          if (smudges) return (1 + i) * multi
         }
       }
     })
