@@ -13,23 +13,24 @@ import {
 const IH = new InputHandler(process.cwd())
 
 const logger = new Logger()
-const log = logger.log
 
-const hash = (s: string): number =>
-  [...s].reduce((v, c) => (v = ((v + c.charCodeAt(0)) * 17) % 256), 0)
+const hash = (s: string) => [...s].reduce((v, c) => (v = ((v + c.charCodeAt(0)) * 17) % 256), 0)
 
-const part1 = (path: string): string | number => IH.toArray(path, ',').map(hash).reduce(sum)
+const part1 = (path: string): number => IH.toArray(path, ',').map(hash).reduce(sum)
 
-const part2 = (path: string): string | number => {
-  const boxes: Map<string, number>[] = new Array(256).fill(0).map(_ => new Map())
-
+const part2 = (path: string): number =>
   IH.toArray(path, ',')
     .map(i => i.split(/=|-/))
-    .map(i => [boxes[hash(i[0])], Number(i[1]), i[0]] as [Map<string, number>, number, string])
-    .forEach(([box, lens, label]) => (lens ? box.set(label, lens) : box.delete(label)))
-
-  return boxes.flatMap((b, i) => [...b].map(([_, f], s) => (1 + i) * (1 + s) * f)).reduce(sum)
-}
+    .map(i => [hash(i[0]), Number(i[1]), i[0]] as [number, number, string])
+    .reduce(
+      (boxes, [boxId, lens, label]) => {
+        lens ? boxes[boxId].set(label, lens) : boxes[boxId].delete(label)
+        return boxes
+      },
+      new Array(256).fill(0).map(_ => new Map())
+    )
+    .flatMap((b, i) => [...b.values()].map((f, s) => (1 + i) * (1 + s) * f))
+    .reduce(sum)
 
 console.clear()
 try {
