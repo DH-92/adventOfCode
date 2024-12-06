@@ -22,13 +22,9 @@ export class Logger {
   constructor() {
     this.events = []
   }
-  log = (...messages: unknown[]): void => {
-    this.events.push(messages)
-  }
+  log = (...messages: unknown[]): void => void this.events.push(messages)
   dump = (): void => this.events.forEach(event => console.debug(event))
-  clear = (): void => {
-    this.events.splice(0, this.events.length)
-  }
+  clear = (): void => void this.events.splice(0, this.events.length)
 }
 
 export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T) {
@@ -40,7 +36,10 @@ export function bench<T>(logger: Logger, name: string, func: () => T, expected?:
   let duration = end - start
 
   const assert =
-    typeof expected !== 'undefined' && result !== expected ? ` !!! EXPECTED ${expected} !!!` : ''
+    typeof expected !== 'undefined' 
+    && result !== expected 
+      ? ` !!! EXPECTED ${expected} !!!` 
+      : ''
 
   if (typeof result === 'string' && /\n/.test(result)) {
     console.log('%s: [%s]%c%s', name, duration.toFixed(2) + 'ms', 'color: red', assert)

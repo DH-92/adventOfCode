@@ -5,47 +5,31 @@ import { InputHandler, INPUT, EXAMPLE, WORD, bench, Logger, sum } from '../helpe
 const inputHandler = new InputHandler(process.cwd())
 
 const logger = new Logger()
-const log = logger.log
 
-const part1 = (path: string): string | number => {
-  const input = inputHandler.toString(path)
-  const commands = input.match(/mul\(\d\d?\d?\,\d\d?\d?\)/g) ?? []
-  return commands
-  .map(command =>
-    command
-      .match(/\d\d?\d?/g)!
-      .map(Number)
-      .reduce((acc, val) => acc * val),
-  )
-  .reduce(sum)
-}
-
-const part2 = (path: string): string | number => {
-  const cmds = inputHandler.toString(path).match(/mul\(\d\d?\d?\,\d\d?\d?\)|do\(\)|don't\(\)/g)
-  let doMode = true
-  const commands: string[] = []
-  cmds?.forEach(cmd => {
-    switch (cmd) {
-      case 'do()':
-        doMode = true
-        return
-      case "don't()":
-        doMode = false
-        return
-    }
-    if (doMode) {
-      commands.push(cmd)
-    }
-  })
-  return commands
-    .map(command =>
-      command
-        .match(/\d\d?\d?/g)!
-        .map(Number)
-        .reduce((acc, val) => acc * val),
-    )
+const part1 = (path: string): number =>
+  [...inputHandler.toString(path).matchAll(/mul\((?<numA>\d{1,3}),(?<numB>\d{1,3})\)/g)]
+    .map(([_, numA, numB]) => Number(numA) * Number(numB))
     .reduce(sum)
-}
+
+const part2 = (path: string): number =>
+  Array.from(
+    inputHandler.toString(path).matchAll(/mul\((?<numA>\d{1,3}),(?<numB>\d{1,3})\)|do\(\)|don't\(\)/g),
+  ).reduce(
+    ([doMode, sum], [string, numA, numB]): [boolean, number] => {
+      switch (string) {
+        case 'do()':
+          return [true, sum]
+        case "don't()":
+          return [false, sum]
+        default:
+          if (!doMode) {
+            return [false, sum]
+          }
+          return [true, +numA * +numB + sum]
+      }
+    },
+    [true, 0] as [boolean, number],
+  )[1]
 
 console.clear()
 bench(logger, 'part 1 example', () => part1(EXAMPLE), 161)
