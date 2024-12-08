@@ -12,56 +12,53 @@ import {
   sum,
   getGrid,
 } from '../helpers/index.mjs'
+import { ExecOptionsWithStringEncoding } from 'child_process'
 
 const inputHandler = new InputHandler(process.cwd())
 
-class Node {
-  x: number
-  y: number
-  constructor({ x, y }: { x: number; y: number }) {
-    this.x = x
-    this.y = y
-  }
-}
-
-const buildGrid = (lines: string[]): { grid: Node[][]; towersByFrequency: Node[][] } => {
-  const grid: Node[][] = getGrid(() => ({}) as Node, lines.length, lines[0].length)
-  const towersByFrequency: Node[][] = []
-  lines.forEach((l, y) => {
-    l.split('').forEach((c, x) => {
-      if (c === '.') return
-      const node = (grid[y][x] = new Node({ x, y }))
-      const val = c.charCodeAt(0)
-      towersByFrequency[val] ??= []
-      towersByFrequency[val].push(node)
-    })
-  })
-  return { grid, towersByFrequency }
-}
+const getPairs = <T extends any>(arr: T[]): [T, T][] =>
+  arr.flatMap((v1): [T, T][] => arr.map((v2): [T, T] => [v1, v2]))
 
 const part1 = (path: string): string | number => {
-  const { grid, towersByFrequency } = buildGrid(inputHandler.toArray(path, LINE))
-  return towersByFrequency
-    .reduce((antiNodes, towers): Boolean[][] => {
-      towers.forEach(tower1 => {
-        towers.forEach(tower2 => {
-          if (tower1 === tower2) return
-          const dy = tower2.y - tower1.y
-          const y = tower1.y - dy
-          const dx = tower2.x - tower1.x
-          const x = tower1.x - dx
-          if (!(x >= 0 && x < grid[0].length && y >= 0 && y < grid.length)) return
-          antiNodes[y] ??= []
-          antiNodes[y][x] = true
-        })
-      })
-      return antiNodes
-    }, [] as Boolean[][])
-    .flat(2).length
+  const lines = inputHandler.toArray(path, LINE)
+  const height = lines.length
+  const width = lines[0].length
+  const towers = lines
+    .map(line => line.split(''))
+    .flatMap((line, y) => line.map((char, x) => ({ x, y, z: char.charCodeAt(0) })))
+    .filter(({ z }) => z !== 46) // '.`.charCodeAt(0) === 46
+
+  return Object.values(Object.groupBy(towers, tower => tower.z))
+    .filter(x => !!x)
+    .flatMap(towers => getPairs(towers).filter(([tower1, tower2]) => tower1 !== tower2))
+    .map(function towerPairsToAntiNodes([tower1, tower2]) {
+      const dx = tower2.x - tower1.x
+      const dy = tower2.y - tower1.y
+      const x = tower1.x - dx
+      const y = tower1.y - dy
+      return { x, y }
+    })
+    .filter(({ x, y }) => y >= 0 && y < height && x >= 0 && x < width)
+    .map(x => JSON.stringify(x))
+    .reduce((set, x) => set.add(x), new Set()).size
 }
 
 const part2 = (path: string): string | number => {
-  const { grid, towersByFrequency } = buildGrid(inputHandler.toArray(path, LINE))
+  const lines = inputHandler.toArray(path, LINE)
+  const height = lines.length
+  const width = lines[0].length
+  const towersByFrequency = lines
+    .map(line => line.split(''))
+    .reduce((towersByFrequency, line, y) => {
+      line.forEach((char, x) => {
+        if (char === '.') return
+        const tower = { x, y }
+        const frequency = char.charCodeAt(0)
+        towersByFrequency[frequency] ??= []
+        towersByFrequency[frequency].push(tower)
+      })
+      return towersByFrequency
+    }, [] as {x: number, y: number}[][])
   return towersByFrequency
     .reduce((antiNodes, towers): Boolean[][] => {
       towers.forEach(tower1 => {
@@ -70,7 +67,7 @@ const part2 = (path: string): string | number => {
           const dx = tower2.x - tower1.x
           const dy = tower2.y - tower1.y
           let { x, y } = tower1
-          while (x >= 0 && x < grid[0].length && y >= 0 && y < grid.length) {
+          while (x >= 0 && x < height && y >= 0 && y < width) {
             antiNodes[y] ??= []
             antiNodes[y][x] = true
             x += dx

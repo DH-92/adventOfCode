@@ -4,8 +4,8 @@
     "noEmit": true,
     "rootDir": ".",
     "module": "node16",
-    "target": "es2022",
-    "lib": ["es2023"]
+    "target": "ESNext",
+    "lib": ["ESNext"]
   },
   "include": ["**/*.ts", "**/*.mts"]
 }
