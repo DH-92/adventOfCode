@@ -27,13 +27,13 @@ export class Logger {
   clear = (): void => void this.events.splice(0, this.events.length)
 }
 
-export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T) {
+export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T, count = 1) {
   const start = performance.now()
-  // for (let i = 0; i < 99; i++) func()
+  for (let i = 0; i < count - 1; i++) func()
   const result = func()
   const end = performance.now()
 
-  let duration = end - start
+  let duration = (end - start) / count
 
   const assert =
     typeof expected !== 'undefined' 

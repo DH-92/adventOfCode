@@ -12,9 +12,10 @@ import {
   sum,
   getGrid,
 } from '../helpers/index.mjs'
-import { ExecOptionsWithStringEncoding } from 'child_process'
 
 const inputHandler = new InputHandler(process.cwd())
+
+const logger = new Logger()
 
 const getPairs = <T extends any>(arr: T[]): [T, T][] =>
   arr.flatMap((v1): [T, T][] => arr.map((v2): [T, T] => [v1, v2]))
@@ -47,43 +48,45 @@ const part2 = (path: string): string | number => {
   const lines = inputHandler.toArray(path, LINE)
   const height = lines.length
   const width = lines[0].length
+  const inGrid = ({ x, y }: { x: number; y: number }) => x >= 0 && x < height && y >= 0 && y < width
+  const vectorMove = (
+    { x, y }: { x: number; y: number },
+    { dx, dy }: { dx: number; dy: number },
+  ) => ({ x: x + dx, y: y + dy })
   const towersByFrequency = lines
     .map(line => line.split(''))
-    .reduce((towersByFrequency, line, y) => {
-      line.forEach((char, x) => {
-        if (char === '.') return
-        const tower = { x, y }
-        const frequency = char.charCodeAt(0)
-        towersByFrequency[frequency] ??= []
-        towersByFrequency[frequency].push(tower)
-      })
-      return towersByFrequency
-    }, [] as {x: number, y: number}[][])
-  return towersByFrequency
-    .reduce((antiNodes, towers): Boolean[][] => {
-      towers.forEach(tower1 => {
-        towers.forEach(tower2 => {
-          if (tower1 === tower2) return
-          const dx = tower2.x - tower1.x
-          const dy = tower2.y - tower1.y
-          let { x, y } = tower1
-          while (x >= 0 && x < height && y >= 0 && y < width) {
-            antiNodes[y] ??= []
-            antiNodes[y][x] = true
-            x += dx
-            y += dy
-          }
+    .reduce(
+      (towersByFrequency, line, y) => {
+        line.forEach((char, x) => {
+          if (char === '.') return
+          const tower = { x, y }
+          const frequency = char.charCodeAt(0)
+          towersByFrequency[frequency] ??= []
+          towersByFrequency[frequency].push(tower)
         })
-      })
+        return towersByFrequency
+      },
+      [] as { x: number; y: number }[][],
+    )
+
+  return towersByFrequency
+    .flatMap(towers => getPairs(towers).filter(([tower1, tower2]) => tower1 !== tower2))
+    .flatMap(([tower1, tower2]) => {
+      const antiNodes: { x: number; y: number }[] = []
+      const delta = { dx: tower2.x - tower1.x, dy: tower2.y - tower1.y }
+      let node = { ...tower1 }
+      while (inGrid(node)) {
+        antiNodes.push(node)
+        node = vectorMove(node, delta)
+      }
       return antiNodes
-    }, [] as Boolean[][])
-    .flat(2).length
+    })
+    .map(x => JSON.stringify(x))
+    .reduce((set, x) => set.add(x), new Set()).size
 }
 
-const logger = new Logger()
-
 console.clear()
-bench(logger, 'part 1 example 2', () => part1('example2.txt'), 2)
+// bench(logger, 'part 1 example 2', () => part1('example2.txt'), 2)
 bench(logger, 'part 1 example', () => part1(EXAMPLE), 14)
 bench(logger, 'part 1 input', () => part1(INPUT), 308)
 bench(logger, 'part 2 example', () => part2(EXAMPLE), 34)
