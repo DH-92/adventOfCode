@@ -15,6 +15,17 @@ export class InputHandler {
   toString = (file: string): string => fs.readFileSync(`${this.inputDir}/${file}`).toString()
   toArray = (file: string, delim: string | RegExp = LINE): string[] =>
     this.toString(file).split(delim)
+  toGrid = (
+    file: string,
+    rowDelim: string | RegExp = LINE,
+    colDelim: string | RegExp = '',
+  ) => this.toArray(file, rowDelim).map(row => row.split(colDelim))
+  toMappedGrid = <T,>(
+    file: string,
+    colMap: (cell: string) => T,
+    rowDelim: string | RegExp = LINE,
+    colDelim: string | RegExp = '',
+  ) => this.toArray(file, rowDelim).map(row => row.split(colDelim).map(colMap))
 }
 
 export class Logger {
@@ -27,19 +38,16 @@ export class Logger {
   clear = (): void => void this.events.splice(0, this.events.length)
 }
 
-export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T, count = 1) {
+export function bench<T>(logger: Logger, name: string, func: () => T, expected?: T) {
   const start = performance.now()
-  for (let i = 0; i < count - 1; i++) func()
+  // for (let i = 0; i < 99; i++) func()
   const result = func()
   const end = performance.now()
 
-  let duration = (end - start) / count
+  let duration = end - start
 
   const assert =
-    typeof expected !== 'undefined' 
-    && result !== expected 
-      ? ` !!! EXPECTED ${expected} !!!` 
-      : ''
+    typeof expected !== 'undefined' && result !== expected ? ` !!! EXPECTED ${expected} !!!` : ''
 
   if (typeof result === 'string' && /\n/.test(result)) {
     console.log('%s: [%s]%c%s', name, duration.toFixed(2) + 'ms', 'color: red', assert)
@@ -58,7 +66,7 @@ export function bench<T>(logger: Logger, name: string, func: () => T, expected?:
   throw ''
 }
 
-export const sum = (acc: number = 0, cal: number = 0): number => acc + cal
+export const sum = (acc: number | undefined = 0, cal: number | undefined = 0): number => acc + cal
 export const product = (acc: number, cal: number): number => acc * cal
 export const numSort = (a: number, b: number): number => a - b
 export const numSortR = (a: number, b: number): number => b - a
@@ -83,7 +91,7 @@ export const reshape = <T,>(flat: T[], width: number): T[][] =>
       rect[col][row] = cell
       return rect
     },
-    [[]] as T[][]
+    [[]] as T[][],
   )
 
 export const transpose = <T,>(matrix: T[][]): T[][] =>
@@ -93,7 +101,7 @@ export const range = (
   start: number,
   finish?: number,
   min: number = 0,
-  max: number = Number.MAX_SAFE_INTEGER
+  max: number = Number.MAX_SAFE_INTEGER,
 ): number[] => {
   const response: number[] = []
   if (finish !== undefined) {
@@ -111,7 +119,7 @@ export const range2 = (
   start: number,
   finish?: number,
   min: number = 0,
-  max: number = Number.MAX_SAFE_INTEGER
+  max: number = Number.MAX_SAFE_INTEGER,
 ) => {
   const from = Math.max(min, finish !== undefined ? start : 1)
   const to = Math.min(max, finish !== undefined ? finish : start)
