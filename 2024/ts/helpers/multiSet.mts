@@ -22,9 +22,9 @@
  * @constructor
  */
 export class MultiSet<T> {
-  items: Map<T, number>
+  private items: Map<T, number>
   size: number
-  dimension: number
+  private dimension: number
   constructor() {
     this.items = new Map()
     this.size = 0
@@ -123,11 +123,9 @@ export class MultiSet<T> {
     if (!count) {
       return false
     }
-
     this.size -= count
     this.dimension--
     this.items.delete(item)
-
     return true
   }
 

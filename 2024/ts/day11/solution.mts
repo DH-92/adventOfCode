@@ -15,6 +15,7 @@ import {
   WORD,
 } from '../helpers/index.mjs'
 import { MultiSet } from '../helpers/multiSet.mjs'
+import { Memoize } from '../helpers/momize-decorator.js'
 
 const inputHandler = new InputHandler(process.cwd())
 
@@ -61,17 +62,40 @@ const part1 = (path: string, loops: number): string | number => {
   return stones.size
 }
 
-const part2 = (path: string, loops: number): string | number =>
-  new Array(loops).fill(false).reduce(
-    (oldSet: MultiSet<number>) => {
-      const newSet = new MultiSet<number>()
-      oldSet.forEachMultiplicity((count, val) => rule(val).forEach(val => newSet.add(val, count)))
-      return newSet
-    },
-    inputHandler
-      .toArray(path, WORD)
-      .reduce((set, val): MultiSet<number> => set.add(Number(val)), new MultiSet<number>()),
-  ).size
+// const cache = new Map<string, number>()
+// const solveInner = (stone: number, depth: number): number => {
+//   if (depth === 0) return 1
+//   if (stone === 0) return solve(1, depth - 1)
+//   const digits = Math.floor(Math.log10(stone)) + 1
+//   if (digits % 2) return solve(stone * 2024, depth - 1)
+//   const half = 10 ** (digits / 2)
+//   return solve(Math.floor(stone / half), depth -1) + solve(stone % half, depth - 1)
+// }
+// const solve = (stone: number, depth: number): number => {
+//   const key = `${stone}:${depth}`
+//   if (cache.has(key)) return cache.get(key) as number
+//   const result = solveInner(stone, depth)
+//   cache.set(key, result)
+//   return result
+// }
+class Solver {
+  @Memoize({ hashFunction: true })
+  static solve(stone: number, depth: number): number {
+    if (depth === 0) return 1
+    if (stone === 0) return this.solve(1, depth - 1)
+    const digits = Math.floor(Math.log10(stone)) + 1
+    if (digits % 2) return this.solve(stone * 2024, depth - 1)
+    const half = 10 ** (digits / 2)
+    return this.solve(Math.floor(stone / half), depth - 1) + this.solve(stone % half, depth - 1)
+  }
+}
+
+const part2 = (path: string, loops: number): string | number => {
+  const solver = new Solver()
+  const input = inputHandler.toArray(path, WORD).map(Number)
+  const output = input.map(stone => Solver.solve(stone, loops))
+  return output.reduce(sum)
+}
 
 console.clear()
 logger.clear()
@@ -79,6 +103,7 @@ bench(logger, 'part 1 example', () => part1('example2.txt', 1), 7)
 bench(logger, 'part 1 example', () => part1(EXAMPLE, 6), 22)
 bench(logger, 'part 1 example', () => part1(EXAMPLE, 25), 55312)
 bench(logger, 'part 1 input', () => part1(INPUT, 25), 183484)
+bench(logger, 'part 2 input', () => part1(INPUT, 75), 218817038947400)
 bench(logger, 'part 2 input', () => part2(INPUT, 75), 218817038947400)
 
 /* the cursed zone
