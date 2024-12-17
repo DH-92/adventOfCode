@@ -15,7 +15,7 @@ import {
   WORD,
 } from '../helpers/index.mjs'
 import { MultiSet } from '../helpers/multiSet.mjs'
-import { Memoize } from '../helpers/momize-decorator.js'
+import { Memoize } from '../helpers/Memoize-decorator.js'
 
 const inputHandler = new InputHandler(process.cwd())
 

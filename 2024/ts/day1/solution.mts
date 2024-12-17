@@ -6,29 +6,29 @@ const inputHandler = new InputHandler(process.cwd())
 
 const part1 = (path: string): string | number => {
   const input = inputHandler.toArray(path)
-  const left:Number[] = []
-  const right:Number[] = []
+  const left = Array<number>()
+  const right = Array<number>()
   input.forEach((line) => {
     const [l, r] = line.split('   ')
     left.push(Number(l))
     right.push(Number(r))
   })
-  const leftSorted: Number[] = left.toSorted((a, b) => a - b)
-  const rightSorted: Number[] = right.toSorted((a, b) => a - b)
+  const leftSorted = left.toSorted((a, b) => a - b)
+  const rightSorted = right.toSorted((a, b) => a - b)
   const diffs = leftSorted.map((l, i) => Math.abs(rightSorted[i] - l))
   return diffs.reduce(sum)
 }
 
 const part2 = (path: string): string | number => {
   const input = inputHandler.toArray(path)
-  const left:Number[] = []
-  const right:Number[] = []
+  const left:number[] = []
+  const right:number[] = []
   input.forEach((line) => {
     const [l, r] = line.split('   ')
     left.push(Number(l))
     right.push(Number(r))
   })
-  const scores = left.map((l) => {
+  const scores = left.map((l: number) => {
     const rCount = right.filter((r) => l === r).length
     const score = l * rCount
     return score
