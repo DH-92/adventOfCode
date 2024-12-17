@@ -22,166 +22,113 @@ type State = {
 
 const part1 = (path: string): string | number => {
   const [para1, para2] = inputHandler.toArray(path, PARAGRAPH)
-  const registers = para1.split(LINE).flatMap(line => line.match(/(\d+)/g).map(Number))
-  const commands = para2.split(LINE).flatMap(line => line.match(/(\d+)/g).map(Number))
-  let instructionPointer = 0
-  console.log(registers)
-  console.log(commands)
-  const combo = (operand: Number) => {
-    switch (operand) {
-      case 0:
-        return 0
-      case 1:
-        return 1
-      case 2:
-        return 2
-      case 3:
-        return 3
-      case 4:
-        return registers[0]
-      case 5:
-        return registers[1]
-      case 6:
-        return registers[2]
-      default:
-        throw new Error(`Invalid combo operand: ${operand}`)
-    }
-  }
-  let output = ''
+  const registers = para1.split(LINE).flatMap(line => line.match(/(\d+)/g)!.map(Number))
+  const commands = para2.split(LINE).flatMap(line => line.match(/(\d+)/g)!.map(Number))
+  registers[3] = 0
+  const output = [] as number[]
   const ops = [
     // adv
-    (operand: number): void => {
-      const numerator = registers[0]
-      const denominator = 2 ** combo(operand)
-      registers[0] = Math.floor(numerator / denominator)
-    },
+    (operand: number) => (registers[0] >>= operand < 4 ? operand : registers[operand - 4]),
     // bxl
-    (operand: number): void => {
-      const a = registers[1]
-      const b = operand
-      registers[1] = a ^ b
-    },
+    (operand: number) => (registers[1] ^= operand),
     // bst
-    (operand: number): void => {
-      const a: number = combo(operand)
-      registers[1] = a % 8
-    },
+    (operand: number) => (registers[1] = operand < 4 ? operand : registers[operand - 4] & 7),
     // jnz
-    (operand: number): void => {
-      if (registers[0] !== 0) {
-        instructionPointer = operand - 2
-      }
-    },
+    (operand: number) => registers[0] ^ 0 && (registers[3] = operand - 2),
     // bxc
-    (operand: number): void => {
-      registers[1] = registers[1] ^ registers[2]
-    },
+    (operand: number) => (registers[1] ^= registers[2]),
     // out
-    (operand: number): void => {
-      const c = combo(operand)
-      const a = c % 8
-      output += `${a},`
-    },
+    (operand: number) => output.push(operand < 4 ? operand : registers[operand - 4] & 7),
     // bdv
-    (operand: number): void => {
-      const numerator = registers[0]
-      const denominator = 2 ** combo(operand)
-      registers[1] = Math.floor(numerator / denominator)
-    },
+    (operand: number) =>
+      (registers[1] = registers[0] >> (operand < 4 ? operand : registers[operand - 4])),
     // cdv
-    (operand: number): void => {
-      const numerator = registers[0]
-      const denominator = 2 ** combo(operand)
-      registers[2] = Math.floor(numerator / denominator)
-    },
+    (operand: number) =>
+      (registers[2] = registers[0] >> (operand < 4 ? operand : registers[operand - 4])),
   ]
   while (true) {
-    console.log(instructionPointer, commands.length)
-    if (instructionPointer >= commands.length - 1) {
-      console.log('break')
-      break
-    }
-    const a = commands[instructionPointer]
-    const b = commands[instructionPointer + 1]
-    console.log({ a, b })
+    if (registers[3] >= commands.length - 1) break
+    const a = commands[registers[3]]
+    const b = commands[registers[3] + 1]
     ops[a](b)
-    instructionPointer += 2
+    registers[3] += 2
   }
-  return output.slice(0, -1)
+  return output.join(',')
 }
 
-const part2 = (path: string): number => {
-  const [para1, para2] = inputHandler.toArray(path, PARAGRAPH)
-  // const regs = para1.split(LINE).flatMap(line => line.match(/(\d+)/g).map(Number))
-  const commands = para2.split(LINE).flatMap(line => line.match(/(\d+)/g)!.map(Number))
-  const ops = [
-    // adv
-    (operand: bigint, state: State): void => {
-      state.registers[0] =
-        state.registers[0] >> (operand < 4n ? operand : state.registers[Number(operand - 4n)])
-    },
-    // bxl
-    (operand: bigint, state: State): void => {
-      state.registers[1] ^= operand
-    },
-    // bst
-    (operand: bigint, state: State): void => {
-      state.registers[1] = operand < 4 ? operand : state.registers[Number(operand - 4n)] & 7n
-    },
-    // jnz
-    (operand: bigint, state: State): void => {
-      if (state.registers[0] !== 0n) state.registers[3] = operand - 2n
-    },
-    // bxc
-    (operand: bigint, state: State): void => {
-      state.registers[1] ^= state.registers[2]
-    },
-    // out
-    (operand: bigint, state: State): void => {
-      state.output.push(Number(operand < 4n ? operand : state.registers[Number(operand - 4n)] & 7n))
-    },
-    // bdv
-    (operand: bigint, state: State): void => {
-      state.registers[1] =
-        state.registers[0] >> (operand < 4 ? operand : state.registers[operand - 4])
-    },
-    // cdv
-    (operand: bigint, state: State): void => {
-      state.registers[2] =
-        state.registers[0] >> (operand < 4 ? operand : state.registers[Number(operand - 4n)])
-    },
-  ]
-  for (let i = 105734774294938n; i <= 105734774294938n; i++) {
-    const state = {
-      registers: [i, 0n, 0n, 0n],
-      output: Array<number>(),
-    }
-    while (true) {
-      if (state.registers[3] >= commands.length - 1) break
-      const a = commands[Number(state.registers[3])]
-      const b = BigInt(commands[Number(state.registers[3] + 1n)])
-      ops[a](b, state)
-      if (a === 5) {
-        const l = state.output.length - 1
-        if (state.output[l] !== commands[l]) break
-      }
-      state.registers[3] += 2n
-    }
-    console.log({ state })
-    console.log({ out: state.output })
-    console.log({ commands })
-    if (state.output.toString() === commands.toString()) {
-      return i
-    }
-    if (i % 1_000_000n === 0n) console.log(i)
+const part2 = (path: string): bigint => {
+  const [, para2] = inputHandler.toArray(path, PARAGRAPH)
+  const commands = para2.split(LINE).flatMap(line => line.match(/(\d+)/g)!.map(BigInt))
+
+  // this is a specific solver for my specific input
+  // 2,4, // bst
+  // 1,5, // bxl
+  // 7,5, // cdv
+  // 4,3, // bxc
+  // 1,6, // bxl
+  // 0,3, // adv
+  // 5,5, // out
+  // 3,0, // jnz
+
+  // do {
+  //   // 2,4
+  //   regB = regA & 7;
+  //   // 1,5
+  //   regB ^= 5;
+  //   // 7,5
+  //   regC = regB >> regA;
+  //   // 4,3
+  //   regB ^= regC;
+  //   // 1,6
+  //   regB ^= regC;
+  //   // 0,3
+  //   regA = regA >> 3;
+  //   // 5,5
+  //   output.push(regB & 7);
+  // } while(regA) // 3,0
+
+  // this function is the inside of the do while loop
+  // at most the last 10 bits of the input are used
+  // this allows to build a lookup table of all possible 10 bit inputs that will result in the correct output
+  function solve(a: bigint): bigint {
+    const b = (a & 7n) ^ 5n
+    return b ^ (a >> b) & 7n ^ 6n
   }
-  throw new Error('No solution found')
+
+  const check = (a: bigint, i: number): boolean => {
+    // because only the last 10 digits are used
+    // we can mask the input to only the last 10 digits
+    // const usedDigits = Number(a) & 2**10 - 1
+    for (let l = 0; l < i; l++) {
+      if (solve(a & 1023n) !== commands[l]) return false
+      a >>= 3n
+    }
+    return true
+  }
+
+  const reverseMap = new Map<bigint, bigint[]>()
+  for (let i = 0n; i < 8n; i++) {
+    reverseMap.set(i, [])
+  }
+  for (let i = 0n; i < 1024n; i++) {
+    reverseMap.get(solve(i))!.push(i)
+  }
+  const values = commands.map((c, i) => reverseMap.get(c)!.map(v => v << (BigInt(i) * 3n)))
+
+  let options: bigint[] = [0n]
+  for (let l = 0; l < commands.length; l++) {
+    const filtered = values[l].flatMap(v => options.map(o => v | o))
+    options = Array.from(new Set(filtered)).filter(v => check(v, l+1))
+  }
+  return options.sort((a, b) => {
+    if (a > b) return 1
+    if (a < b) return -1
+    return 0
+  })[0]
 }
-
-
 const logger = new Logger()
 
-// bench(logger, 'part 1 example', () => part1(EXAMPLE), '4,6,3,5,6,3,5,2,1,0')
-// bench(logger, 'part 1 input', () => part1(INPUT), '7,3,5,7,5,7,4,3,0')
+bench(logger, 'part 1 example', () => part1(EXAMPLE), '4,6,3,5,6,3,5,2,1,0')
+bench(logger, 'part 1 input', () => part1(INPUT), '7,3,5,7,5,7,4,3,0')
 // bench(logger, 'part 2 example', () => part2('example2.txt'), 117440)
 bench(logger, 'part 2 input', () => part2(INPUT), 105734774294938n)
