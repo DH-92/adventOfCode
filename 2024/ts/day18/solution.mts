@@ -16,14 +16,17 @@ enum Direction {
   'west',
 }
 
-const rotate = (direction: Direction, turns: number = 1): Direction => (direction + turns) % 4
+const rotate = (direction: Direction, turns: number = 1): Direction => {
+  if (!(direction in Direction)) throw 'bad rotate'
+  return (Number(direction) + turns) % 4
+}
 
 class Node {
   x: number
   y: number
   id: string
   neighbours: Partial<Record<Direction, Node>>
-  cost: number = Number.MAX_SAFE_INTEGER
+  cost: number = Infinity
   constructor(x: number, y: number, id: string) {
     this.x = x
     this.y = y
@@ -35,10 +38,26 @@ class Node {
     this.neighbours[direction] = node
     node.neighbours[rotate(direction, 2)] = this
   }
+  removeEdge(direction: Direction) {
+    const node = this.neighbours[direction]
+    if (!node) return
+    delete node.neighbours[rotate(direction, 2)]
+  }
+  removeAllEdges() {
+    Object.keys(this.neighbours).forEach(dir => {
+      delete this.neighbours[Number(dir) as Direction]?.neighbours[rotate(Number(dir), 2)]
+    })
+    this.neighbours = {}
+  }
   init() {
     return this
   }
+  toString() {
+    return `${this.x},${this.y}`
+  }
 }
+
+type QueueElement = { x: number; y: number; cost: number }
 
 class Lattice<T extends Node = Node> {
   data: T[][]
@@ -61,44 +80,29 @@ class Lattice<T extends Node = Node> {
     this.start = this.data[0][0]
     this.end = this.data[array.length - 1][array[0].length - 1]
   }
+
   add = (x: number, y: number, val: string): T =>
     (this.data[y][x] = new this._NodeConstructor(x, y, val))
+
   connect = (a: T, b: T, direction: Direction) => a.addEdge(b, direction)
-}
 
-type QueueElement = { x: number; y: number; cost: number }
-
-class Solver {
-  lattice: Lattice
-  best: number
-  seats: Set<string>
-  constructor(lattice: Lattice) {
-    this.lattice = lattice
-    this.best = 0
-    this.seats = new Set()
-  }
+  all = () => this.data.flat().filter(Boolean)
 
   bfs(x: number, y: number): number {
-    const heap = new Heap<QueueElement>((a: QueueElement, b: QueueElement) => a.cost - b.cost)
-    const visited = new Set<string>()
-    heap.push({ x, y, cost: 0 })
+    const heap = new Heap<T>((a: T, b: T) => a.cost - b.cost)
+    const visited = new Set<T>()
+    heap.push(this.data[y]?.[x] ?? this.start)
     while (heap.size) {
-      const { x, y, cost } = heap.pop()!
-      if (visited.has(`${x},${y}`)) continue
-      visited.add(`${x},${y}`)
-      // console.log({ x, y, cost })
-      const node = this.lattice.data[y]?.[x]
-      if (node === this.lattice.end) {
-        // console.log('found')
-        // console.log({ end: this.lattice.end, node })
-        return (this.best = cost)
+      const node = heap.pop()!
+      if (visited.has(node)) continue
+      visited.add(node)
+      const nextCost = node.cost + 1
+      for (const next of Object.values(node.neighbours)) {
+        if (visited.has(next as T)) continue
+        if (next === this.end) return nextCost
+        next.cost = nextCost
+        heap.push(next as T)
       }
-      Object.values(node.neighbours).forEach(next => {
-        const c2 = cost + 1
-        if (next.cost < c2) return
-        next.cost = c2
-        heap.push({ x: next.x, y: next.y, cost: c2 })
-      })
     }
     throw new Error('No path found')
   }
@@ -126,33 +130,35 @@ const part1 = (path: string, size: number, bytes: number): string | number => {
     .slice(0, bytes)
   corrupts.forEach(([x, y]) => (grid[y][x] = '#'))
   const lattice = new Lattice<Node>(Node, grid)
-  const solver = new Solver(lattice)
-  return solver.bfs(lattice.start.x, lattice.start.y)
+  return lattice.bfs(lattice.start.x, lattice.start.y)
 }
 
 const part2 = (path: string, size: number): string | number => {
   const corrupts = inputHandler
-  .toArray(path)
-  .map(line => line.match(/(\d+)/g)!.map(Number))
+    .toArray(path)
+    .map(line => line.match(/(\d+)/g)!.map(Number))
+    .reverse()
 
-  for (let bytes = 0; bytes < corrupts.length; bytes++) {
-    const grid = getGrid(() => '.', size, size)
-    const input = corrupts.slice(0,bytes)
-    input.forEach(([x, y]) => grid[y][x] = '#')
-    const lattice = new Lattice<Node>(Node, grid)
-    const solver = new Solver(lattice)
+  const grid = getGrid(() => '.', size, size)
+  const lattice = new Lattice<Node>(Node, grid)
+  while (true) {
+    const [x, y] = corrupts.pop()!
+    lattice.data[y][x].removeAllEdges()
+    lattice.all().forEach(node => (node.cost = Infinity))
+
     try {
-      solver.bfs(lattice.start.x, lattice.start.y)
-    } catch {
-      console.log({ bytes }, corrupts[bytes], input[bytes], input[input.length - 1])
-      return input[input.length - 1].join(',')
+      lattice.bfs(lattice.start.x, lattice.start.y)
+    } catch (e) {
+      // console.log(e)
+      return `${x},${y}`
     }
   }
+  return 'No solution found'
 }
 
 console.clear()
 // logger.clear()
 bench(logger, 'part 1 example', () => part1(EXAMPLE, 7, 12), 22)
 bench(logger, 'part 1 input', () => part1(INPUT, 71, 1024), 382)
-bench(logger, 'part 1 example', () => part2(EXAMPLE, 7), '6,1')
+bench(logger, 'part 2 example', () => part2(EXAMPLE, 7), '6,1')
 bench(logger, 'part 2 input', () => part2(INPUT, 71), '6,36')
