@@ -92,7 +92,7 @@ const part2 = (path: string): bigint => {
   // this allows to build a lookup table of all possible 10 bit inputs that will result in the correct output
   function solve(a: bigint): bigint {
     const b = (a & 7n) ^ 5n
-    return b ^ (a >> b) & 7n ^ 6n
+    return ((a >> b) & 7n) ^ b ^ 6n
   }
 
   const check = (a: bigint, i: number): boolean => {
@@ -100,7 +100,8 @@ const part2 = (path: string): bigint => {
     // we can mask the input to only the last 10 digits
     // const usedDigits = Number(a) & 2**10 - 1
     for (let l = 0; l < i; l++) {
-      if (solve(a & 1023n) !== commands[l]) return false
+      const b = (a & 7n) ^ 5n
+      if (commands[l] !== solve(a)) return false
       a >>= 3n
     }
     return true
@@ -115,16 +116,13 @@ const part2 = (path: string): bigint => {
   }
   const values = commands.map((c, i) => reverseMap.get(c)!.map(v => v << (BigInt(i) * 3n)))
 
+  const bigintsort = (a: bigint, b: bigint) => (a > b ? 1 : -1)
   let options: bigint[] = [0n]
   for (let l = 0; l < commands.length; l++) {
-    const filtered = values[l].flatMap(v => options.map(o => v | o))
-    options = Array.from(new Set(filtered)).filter(v => check(v, l+1))
+    const candidates = values[l].flatMap(v => options.map(o => v | o))
+    options = [...new Set(candidates)].filter(v => check(v, l + 1)).sort(bigintsort) //.slice(0, 340)
   }
-  return options.sort((a, b) => {
-    if (a > b) return 1
-    if (a < b) return -1
-    return 0
-  })[0]
+  return options[0]
 }
 const logger = new Logger()
 

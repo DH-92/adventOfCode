@@ -16,8 +16,8 @@ enum Direction {
   'west',
 }
 
-const rotate = (direction: Direction, turns: number = 1): Direction => {
-  if (!(direction in Direction)) throw 'bad rotate'
+const rotate = (direction: string | number, turns: number = 1): Direction => {
+  if (!(Number(direction) in Direction)) throw 'bad rotate'
   return (Number(direction) + turns) % 4
 }
 
@@ -45,7 +45,7 @@ class Node {
   }
   removeAllEdges() {
     Object.keys(this.neighbours).forEach(dir => {
-      delete this.neighbours[Number(dir) as Direction]?.neighbours[rotate(Number(dir), 2)]
+      delete this.neighbours[rotate(+dir, 0)]?.neighbours[rotate(+dir, 2)]
     })
     this.neighbours = {}
   }
@@ -88,23 +88,26 @@ class Lattice<T extends Node = Node> {
 
   all = () => this.data.flat().filter(Boolean)
 
-  bfs(x: number, y: number): number {
-    const heap = new Heap<T>((a: T, b: T) => a.cost - b.cost)
-    const visited = new Set<T>()
-    heap.push(this.data[y]?.[x] ?? this.start)
-    while (heap.size) {
-      const node = heap.pop()!
-      if (visited.has(node)) continue
-      visited.add(node)
-      const nextCost = node.cost + 1
-      for (const next of Object.values(node.neighbours)) {
-        if (visited.has(next as T)) continue
-        if (next === this.end) return nextCost
-        next.cost = nextCost
-        heap.push(next as T)
+  aStar(x?: number, y?: number): number | undefined {
+    const costs = new Map<T, number>()
+    const score = (node: T) =>
+      Math.abs(this.end.x - node.x) + Math.abs(this.end.y - node.y) + (costs.get(node) ?? Infinity)
+    const start = this.data[y]?.[x] ?? this.start
+    costs.set(start, 0)
+    const openSet = new Heap<T>((a: T, b: T) => score(a) - score(b))
+    openSet.push(start)
+    while (openSet.size) {
+      const current = openSet.pop()!
+      if (current === this.end) return costs.get(current)
+
+      for (const next of Object.values(current.neighbours) as T[]) {
+        const tentative_gScore = costs.get(current)! + 1
+        if ((costs.get(next) ?? Infinity) <= tentative_gScore) continue
+        costs.set(next, tentative_gScore)
+        openSet.push(next as T)
       }
     }
-    throw new Error('No path found')
+    return undefined
   }
 
   // @Memoize((x: number, y: number, dir: Direction, cost: number) => `${x},${y},${dir},${cost}`)
@@ -122,38 +125,44 @@ class Lattice<T extends Node = Node> {
   // }
 }
 
-const part1 = (path: string, size: number, bytes: number): string | number => {
+const binarySearch = (left: number, right: number, predicate: (mid: number) => boolean): number => {
+  let l = left
+  let r = right
+  while (l < r) {
+    const mid = Math.floor((l + r) / 2)
+    const res = predicate(mid)
+    if (res) {
+      r = mid
+    } else {
+      l = mid + 1
+    }
+  }
+  return l
+}
+
+const part1 = (path: string, size: number, bytes: number): number => {
   const grid = getGrid(() => '.', size, size)
-  const corrupts = inputHandler
+  const lattice = new Lattice<Node>(Node, grid)
+  inputHandler
     .toArray(path)
     .map(line => line.match(/(\d+)/g)!.map(Number))
     .slice(0, bytes)
-  corrupts.forEach(([x, y]) => (grid[y][x] = '#'))
-  const lattice = new Lattice<Node>(Node, grid)
-  return lattice.bfs(lattice.start.x, lattice.start.y)
+    .forEach(([x, y]) => lattice.data[y][x].removeAllEdges())
+  return lattice.aStar() ?? 0
 }
 
-const part2 = (path: string, size: number): string | number => {
-  const corrupts = inputHandler
-    .toArray(path)
-    .map(line => line.match(/(\d+)/g)!.map(Number))
-    .reverse()
-
+const part2 = (path: string, size: number): string | void => {
+  const corrupts = inputHandler.toArray(path).map(line => line.match(/(\d+)/g)!.map(Number))
   const grid = getGrid(() => '.', size, size)
-  const lattice = new Lattice<Node>(Node, grid)
-  while (true) {
-    const [x, y] = corrupts.pop()!
-    lattice.data[y][x].removeAllEdges()
-    lattice.all().forEach(node => (node.cost = Infinity))
 
-    try {
-      lattice.bfs(lattice.start.x, lattice.start.y)
-    } catch (e) {
-      // console.log(e)
-      return `${x},${y}`
-    }
+  // binary search for the length of corrupts that breaks the path
+  const binarySearchInner = (mid: number): boolean => {
+    const lattice = new Lattice<Node>(Node, grid)
+    corrupts.slice(0, mid).forEach(([x, y]) => lattice.data[y][x].removeAllEdges())
+    return lattice.aStar() === undefined
   }
-  return 'No solution found'
+  const res = binarySearch(0, corrupts.length, binarySearchInner)
+  return corrupts[res - 1]?.join(',')
 }
 
 console.clear()
