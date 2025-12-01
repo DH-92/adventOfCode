@@ -1,0 +1,12 @@
+{
+  "extends": "./node_modules/gts/tsconfig-google.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "module": "node16",
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "experimentalDecorators": true
+  },
+  "include": ["**/*.ts", "**/*.mts"]
+}
