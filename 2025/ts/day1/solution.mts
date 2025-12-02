@@ -5,9 +5,9 @@ import { InputHandler, INPUT, EXAMPLE, LINE, bench, Logger, sum } from '../helpe
 const inputHandler = new InputHandler(process.cwd())
 
 const part1 = (path: string): string | number => {
-  let position = 50; // starts in the middle
+  let position = 50 // starts in the middle
 
-  const countByPosition:Array<number> = Array(100).fill(0)
+  const countByPosition: Array<number> = Array(100).fill(0)
   const move = (direction: 'L' | 'R', distance: number) => {
     switch (direction) {
       case 'L':
@@ -18,7 +18,7 @@ const part1 = (path: string): string | number => {
         break
     }
     // console.log(`Pre-mod position: ${position}`)
-    position = ( position + 100 ) % 100
+    position = (position + 100) % 100
     countByPosition[position]++
     // console.log(`Moved ${direction}${distance} to position ${position}`)
   }
@@ -28,53 +28,52 @@ const part1 = (path: string): string | number => {
     const distance = Number(chars.slice(1).join(''))
     return { direction, distance }
   })
-  
+
   input.forEach(({ direction, distance }) => move(direction, distance))
 
   return countByPosition[0]
 }
 
 const part2 = (path: string): string | number => {
-  let position = 50; // starts in the middle
+  const dialSize = 100
 
-  let count = 0;
-  const move = (direction: 'L' | 'R', distance: number) => {
-    switch (direction) {
-      case 'L':
-        // position -= distance
-        for(let i = 0; i < distance; i++) {
-          position--;
-          if (position === 0) count++;
-          position = ( position + 100 ) % 100
-        }
-        break
-      case 'R':
-        // position += distance
-        for(let i = 0; i < distance; i++) {
-          position++;
-          if (position === 100) count++;
-          position = ( position + 100 ) % 100
-        }
-        break
+  const move = (acc, curr) => {
+    let { count, position } = acc
+    const { direction, distance } = curr
+    const dir = direction === 'L' ? -1 : 1
+
+    position = position % dialSize
+    // If last move finished at 0, avoid double counting it
+    if (dir === -1 && position === 0) position = dialSize
+
+    position += dir * distance
+
+    if (position === 0) {
+      count += 1
+    } else if (position < 0) {
+      count += Math.floor(Math.abs(position / dialSize)) + 1
+      position = (position + dialSize * Math.ceil(distance / dialSize)) % dialSize
+    } if (position >= dialSize) {
+      count += Math.floor(position / dialSize)
     }
+    return { position, count }
   }
-  const input = inputHandler.toArray(path).map(line => {
-    const chars = line.split('')
-    const direction = chars[0] as 'L' | 'R'
-    const distance = Number(chars.slice(1).join(''))
-    return { direction, distance }
-  })
-  
-  input.forEach(({ direction, distance }) => move(direction, distance))
 
-  return count
+  const parseLine = (line: string): { direction: 'L' | 'R'; distance: number } => ({
+    direction: line[0] as 'L' | 'R',
+    distance: Number(line.slice(1)),
+  })
+
+  const input = inputHandler.toArray(path).map(parseLine)
+
+  return input.reduce(move, { position: 50, count: 0 }).count
 }
 
 const logger = new Logger()
 
 console.clear()
-bench(logger,'part 1 example', () => part1(EXAMPLE), 3)
-bench(logger, 'part 1 input', () => part1(INPUT), )
+bench(logger, 'part 1 example', () => part1(EXAMPLE), 3)
+bench(logger, 'part 1 input', () => part1(INPUT))
 
 bench(logger, 'part 2 example', () => part2(EXAMPLE), 6)
 
