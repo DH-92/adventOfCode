@@ -15,11 +15,8 @@ export class InputHandler {
   toString = (file: string): string => fs.readFileSync(`${this.inputDir}/${file}`).toString()
   toArray = (file: string, delim: string | RegExp = LINE): string[] =>
     this.toString(file).split(delim)
-  toGrid = (
-    file: string,
-    rowDelim: string | RegExp = LINE,
-    colDelim: string | RegExp = '',
-  ) => this.toArray(file, rowDelim).map(row => row.split(colDelim))
+  toGrid = (file: string, rowDelim: string | RegExp = LINE, colDelim: string | RegExp = '') =>
+    this.toArray(file, rowDelim).map(row => row.split(colDelim))
   toMappedGrid = <T,>(
     file: string,
     colMap: (cell: string) => T,
@@ -137,6 +134,8 @@ export const range2 = (
     },
   }
 }
+
+export const getPrimes = (): number[] => JSON.parse(fs.readFileSync(process.cwd() + `/../helpers/primes_1000.json`))
 
 export const getGrid = <T,>(filling: () => T, x: number, y?: number): T[][] =>
   new Array(x).fill(undefined).map(_ => new Array(y ?? x).fill(undefined).map(_ => filling()))

@@ -22,20 +22,16 @@ const part1 = (path: string): string | number => {
 
   let sum = 0
   const isInvalid = (string: string): boolean => {
-    // console.log('checking', string)
     if (string.length % 2 !== 0) {
-      // console.log('odd length', string)
       return false
     }
 
     const half = string.length / 2
     for (let i = 0; i < half; i++) {
       if (string[i] !== string[i + half]) {
-        // console.log('mismatch', string, string[i], string[i + half])
         return false
       }
     }
-    // console.log('is invalid', string)
     sum += Number(string)
     return true
   }
@@ -56,48 +52,83 @@ const part1 = (path: string): string | number => {
 const primes = getPrimes()
 
 const part2 = (path: string): string | number => {
-  const input = inputHandler
-    .toString(path)
-    .split(',')
-    .map(range => range.split('-').map(Number))
-
-  const moduloCache: number[][] = [[]]
-  // getModulo to check for repeated values in numeric strings
-  // e.g. 123123123 with partialCount 3 and partialLength 3
-  // needs to check modulo 1001001 (10^0 + 10^3 + 10^6)
-  const getModulo = (partialCount: number, partialDigits: number): number => {
-    if (moduloCache[partialCount]?.[partialDigits]) {
-      return moduloCache[partialCount][partialDigits]
-    }
+  // get divisor that quickly checks for repeated values in numbers
+  // e.g. 123123123 has 9 digits with 3 identical chunks each with a length of 3 digits
+  // It can be found by checking modulo 1001001 (10^0 + 10^3 + 10^6)
+  const getDivisorForChunkPattern = (digits: number, numberOfChunks: number): number => {
+    const sizeOfChunks = digits / numberOfChunks
     let modulo = 0
-    for (let i = 0; i < partialCount; i++) {
-      modulo += 10 ** (i * partialDigits)
+    for (let digit = 0; digit < digits; digit += sizeOfChunks) {
+      modulo += 10 ** digit
     }
-    moduloCache[partialCount] ??= []
-    return (moduloCache[partialCount][partialDigits] = modulo)
+    return modulo
   }
 
-  const isInvalid = (id: number): boolean => {
-    for (const partialCount of primes) {
-      const digits = Math.ceil(Math.log10(id+1))
-      if (partialCount > digits) {
-        return false
-      }
-      if (digits % partialCount) {
-        continue
-      }
-      const partialDigits = digits / partialCount
-      const modulo = getModulo(partialCount, partialDigits)
-      if (id % modulo === 0) {
-        return true
-      }
+  const getInterestingDivisorsByDigits = (digits: number): number[] => {
+    const divisors: number[] = []
+
+    // find all chunk patterns that fit within the number of digits
+    // only need to check prime numbers as patterns made of composites are covered by their prime factors
+    for (const numberOfChunks of primes) {
+      if (numberOfChunks > digits) break
+
+      // must divide evenly to create chunks
+      if (digits % numberOfChunks !== 0) continue
+
+      divisors.push(getDivisorForChunkPattern(digits, numberOfChunks))
     }
-    return false
+    return divisors
   }
 
-  const ranges = input.map(([start, end]) => range(start, end))
+  const validateRange = ([start, end]: [number, number]): number[] => {
+    const startDigits = Math.ceil(Math.log10(start + 1))
+    const endDigits = Math.ceil(Math.log10(end + 1))
 
-  return ranges.flat().filter(isInvalid).reduce(sum, 0)
+    // Need to avoid duplicates as some numbers may be divisible by multiple patterns
+    // e.g. 222222 is divisible by both 10101 (22 3 times) and 1001 (222 3 times)
+    const invalidIds = new Set<number>()
+
+    for (const divisor of getInterestingDivisorsByDigits(startDigits)) {
+      // First number >= start that is divisible by divisor
+      const firstInvalid = Math.ceil(start / divisor) * divisor
+
+      // Last number with startDigits digits eg. 999 for 3 digits
+      const endOfStartDigits = 10 ** startDigits - 1
+
+      const firstRangeEnd = Math.min(end, endOfStartDigits)
+
+      // Add all invalid IDs in range
+      for (
+        let invalid = firstInvalid;
+        invalid <= firstRangeEnd;
+        invalid += divisor
+      ) {
+        invalidIds.add(invalid)
+      }
+    }
+
+    if (startDigits !== endDigits) {
+      for (const divisor of getInterestingDivisorsByDigits(endDigits)) {
+        // First number with endDigits digits eg 1000 for 4 digits
+        const startOfEndDigits = 10 ** (endDigits - 1)
+
+        // First number >= startOfEndDigits that is divisible by divisor
+        const firstInvalid = Math.ceil(startOfEndDigits / divisor) * divisor
+
+        // Add all invalid IDs in range
+        for (let invalid = firstInvalid; invalid <= end; invalid += divisor) {
+          invalidIds.add(invalid)
+        }
+      }
+    }
+    return [...invalidIds]
+  }
+
+  return inputHandler
+    .toArray(path, ',')
+    .map(range => range.split('-').map(Number) as [number, number])
+    .flatMap(validateRange)
+    .reduce(sum)
 }
 
 const logger = new Logger()
