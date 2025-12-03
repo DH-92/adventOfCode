@@ -37,35 +37,49 @@ const part2 = (path: string): string | number => {
   const input = inputHandler.toArray(path)
   const targetLength = 12
 
-  const bankJoltage = (bank: string): number => {
-    const digits = bank.split('').map(Number)
-    const positionsByDigit = digits
-      .reduce((map: Record<number, number[]>, d, i) => {
+  type PositionsByDigit = Record<string, number[]>
+
+  const getPositionsByDigit = (bank: string): PositionsByDigit =>
+    bank
+      .split('')
+      .map(Number)
+      .reduce((map: PositionsByDigit, d, i) => {
         ;(map[d] ??= []).push(i)
         return map
       }, {})
 
-    const result: number[] = []
+  const bankJoltage = (positionsByDigit: PositionsByDigit): number => {
+    const bankLength = Math.max(...Object.values(positionsByDigit).flat()) + 1
+
+    const result: string[] = []
     let currentPos = -1
 
+    const digits = Object.entries(positionsByDigit).reverse()
     while (true) {
-      nextVal: for (let i = 9; i >= 0; i--) {
-        for (const position of positionsByDigit[i] ?? []) {
-          if (currentPos >= position) continue
+      // Do not add digits to the result if we wouldn't have enough room left to fill the result
+      const highestValidPosition = bankLength + result.length - targetLength
 
-          const remainingDigits = result.length - targetLength
-          if (position > (bank.length + remainingDigits)) continue
+      for (const [digit, positionsOfDigit] of digits) {
+        const [nextPos] = positionsOfDigit
+          .filter(pos => pos > currentPos)
+          .filter(pos => pos <= highestValidPosition)
 
-          result.push(i)
-          if (result.length === targetLength) return Number(result.join(''))
+        if (nextPos === undefined) continue
 
-          currentPos = position
-          break nextVal
-        }
+        result.push(digit)
+        // we're done - return the result
+        if (result.length === targetLength) return Number(result.join(''))
+
+        currentPos = nextPos
+        // look for the next 9, then 8, etc
+        break
       }
     }
   }
-  return input.map(bankJoltage).reduce((a, b) => a + b, 0)
+  return input
+    .map(getPositionsByDigit)
+    .map(bankJoltage)
+    .reduce((a, b) => a + b, 0)
 }
 
 const logger = new Logger()
