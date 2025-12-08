@@ -21,12 +21,7 @@ const inputHandler = new InputHandler(process.cwd())
 
 const part1 = (path: string): string | number => {
   const lines = inputHandler.toArray(path)
-  const startLine = lines.shift()
-  const start = startLine?.indexOf('S')
-
-  if (!start) {
-    throw new Error('No start found')
-  }
+  const start = lines.shift()?.indexOf('S')
 
   const splittersByLine = lines
     .filter(line => line.includes('^'))
@@ -52,26 +47,19 @@ const part2 = (path: string): string | number => {
   const lines = inputHandler.toArray(path)
   const start = lines.shift()?.indexOf('S')
 
-  const splittersByLine = lines
+  return lines
     .filter(line => line.includes('^'))
     .map(line => [...line.matchAll(new RegExp('\\^', 'g')).map(a => a.index!)])
-
-  class Solver {
-    @Memoize({ hashFunction: true })
-    solve(beam: number, line: number): number {
-      if (line >= splittersByLine.length) {
-        return 1
-      }
-      const nextLine = line + 1
-
-      const splitters = splittersByLine[line]
-      if (!splitters.includes(beam)) {
-        return this.solve(beam, nextLine)
-      }
-      return this.solve(beam - 1, nextLine) + this.solve(beam + 1, nextLine)
-    }
-  }
-  return new Solver().solve(start!, 0)
+    .reverse()
+    .reduce(
+      (traces, splitters) =>
+        traces.map((trace, i) => (
+          splitters.includes(i) 
+            ? traces[i - 1] + traces[i + 1] 
+            : trace
+        )),
+      new Array<number>(lines[0].length).fill(1),
+    )[start!]
 }
 
 const logger = new Logger()
