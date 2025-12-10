@@ -7,6 +7,7 @@ import {
   bench,
   Logger,
   product,
+  combinations,
 } from '../helpers/index.mjs'
 import { Heap } from '../helpers/binary-heap.mjs'
 
@@ -42,7 +43,8 @@ const part1 = (path: string, maxConnections: number): string | number => {
     })
   })
 
-  const circuits: Array<Set<Node>> = []
+  const circuits: Set<Set<Node>> = new Set()
+  const circuitsByNode: Map<Node, Set<Node>> = new Map()
 
   const distanceArr = []
   for (let i = 0; i < maxConnections; i++) {
@@ -50,36 +52,34 @@ const part1 = (path: string, maxConnections: number): string | number => {
   }
 
   distanceArr.forEach(({ a, b }) => {
-    const circuitWithA = circuits.find(circuit => circuit.has(a))
-    const circuitWithB = circuits.find(circuit => circuit.has(b))
+    const circuitWithA = circuitsByNode.get(a)
+    const circuitWithB = circuitsByNode.get(b)
 
     if (!circuitWithA && !circuitWithB) {
       // New circuit
-      circuits.push(new Set([a, b]))
+      const newCircuit = new Set([a, b])
+      circuits.add(newCircuit)
+      circuitsByNode.set(a, newCircuit).set(b, newCircuit)
       return
     }
+
     if (circuitWithA === circuitWithB) {
       // Both already in same circuit
       return
     }
+
     if (circuitWithA && circuitWithB) {
       // Merge circuits
-      ;[...circuitWithB!].forEach(node => circuitWithA.add(node))
-      circuits.splice(circuits.indexOf(circuitWithB), 1)
-      return
-    }
-    if (circuitWithA) {
-      circuitWithA.add(b)
-      return
-    }
-    if (circuitWithB) {
-      circuitWithB.add(a)
-      return
+      circuitWithB.forEach(node => circuitsByNode.set(node, circuitWithA.add(node)))
+      circuits.delete(circuitWithB)
+    } else if (circuitWithA) {
+      circuitsByNode.set(b, circuitWithA.add(b))
+    } else if (circuitWithB) {
+      circuitsByNode.set(a, circuitWithB.add(a))
     }
   })
 
-
-  return circuits
+  return [...circuits]
     .map(c => c.size)
     .sort((a, b) => b - a)
     .splice(0, 3)
@@ -96,10 +96,9 @@ const part2 = (path: string): string | number => {
   interface Connection {
     a: Node
     b: Node
-    dist: number
   }
 
-  const nodeDist = (a: Node, b: Node): number =>
+  const nodeDist = ({ a, b }: Connection): number =>
     Math.sqrt(
       Math.pow(Math.abs(a.x - b.x), 2) +
         Math.pow(Math.abs(a.y - b.y), 2) +
@@ -111,29 +110,27 @@ const part2 = (path: string): string | number => {
     .map(line => line.split(',').map(Number))
     .map(([x, y, z]) => ({ x, y, z }))
 
-  const connections = new Heap<Connection>(
-    (a: Connection, b: Connection) => a.dist - b.dist,
-  )
+  // all possible connection combinations between nodes, sorted by distance
+  const connections = new Heap<Connection>((a, b) => nodeDist(a) - nodeDist(b))
+  connections.fromArray(combinations(nodes))
 
-  nodes.forEach((nodeA, a) => {
-    nodes.forEach((nodeB, b) => {
-      if (a >= b) return
-      const dist = nodeDist(nodeA, nodeB)
-      connections.push({ a: nodeA, b: nodeB, dist })
-    })
-  })
+  // a circuit is a set of junction box nodes that are all connected
+  const circuits: Set<Set<Node>> = new Set()
 
-  const circuits: Array<Set<Node>> = []
+  // a map to index which circuit a node is in
+  const circuitsByNode: Map<Node, Set<Node>> = new Map()
 
   while (true) {
-    const {a, b} = connections.pop()!
+    const { a, b } = connections.pop()!
 
-    const circuitWithA = circuits.find(circuit => circuit.has(a))
-    const circuitWithB = circuits.find(circuit => circuit.has(b))
+    const circuitWithA = circuitsByNode.get(a)
+    const circuitWithB = circuitsByNode.get(b)
 
     if (!circuitWithA && !circuitWithB) {
       // New circuit
-      circuits.push(new Set([a, b]))
+      const newCircuit = new Set([a, b])
+      circuits.add(newCircuit)
+      circuitsByNode.set(a, newCircuit).set(b, newCircuit)
       continue
     }
 
@@ -144,15 +141,15 @@ const part2 = (path: string): string | number => {
 
     if (circuitWithA && circuitWithB) {
       // Merge circuits
-      ;[...circuitWithB].forEach(node => circuitWithA.add(node))
-      circuits.splice(circuits.indexOf(circuitWithB), 1)
+      circuitWithB.forEach(node => circuitsByNode.set(node, circuitWithA.add(node)))
+      circuits.delete(circuitWithB)
     } else if (circuitWithA) {
-      circuitWithA.add(b)
+      circuitsByNode.set(b, circuitWithA.add(b))
     } else if (circuitWithB) {
-      circuitWithB.add(a)
+      circuitsByNode.set(a, circuitWithB.add(a))
     }
 
-    if (circuits[0]?.size === nodes.length) {
+    if (circuits.size === 1 && [...circuits][0]?.size === nodes.length) {
       return a.x * b.x
     }
   }

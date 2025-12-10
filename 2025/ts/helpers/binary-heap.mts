@@ -357,8 +357,8 @@ function nlargest(compare: Function, n: number, iterable: any) {
 export class Heap<T> {
   items: T[] = []
   size: number = 0
-  comparator: Function
-  constructor(comparator: Function) {
+  comparator: (a: T, b: T) => number
+  constructor(comparator: (a: T, b: T) => number) {
     this.comparator = comparator
     if (typeof this.comparator !== 'function')
       throw new Error('mnemonist/Heap.constructor: given comparator should be a function.')
@@ -458,6 +458,14 @@ export class Heap<T> {
     return proxy
   }
 
+  fromArray(items: Array<T>): Heap<T> {
+    heapify(this.comparator, items)
+    this.items = items
+    this.size = items.length
+
+    return this
+  }
+
   // if (typeof Symbol !== 'undefined')
   //   Heap.prototype[Symbol.for('nodejs.util.inspect.custom')] = Heap.prototype.inspect
 
@@ -479,29 +487,29 @@ export class Heap<T> {
 
   // MaxHeap.prototype = Heap.prototype
 
-  // /**
-  //  * Static @.from function taking an arbitrary iterable & converting it into
-  //  * a heap.
-  //  *
-  //  * @param  {Iterable} iterable   - Target iterable.
-  //  * @param  {function} comparator - Custom comparator function.
-  //  * @return {Heap}
-  //  */
-  // static from<T>(iterable: Iterable<T, any, any>, comparator: Function) {
-  //   var heap = new Heap<T>(comparator)
+  /**
+   * Static @.from function taking an arbitrary iterable & converting it into
+   * a heap.
+   *
+   * @param  {Iterable} iterable   - Target iterable.
+   * @param  {function} comparator - Custom comparator function.
+   * @return {Heap}
+   */
+  static from<T>(iterable: Array<T>, comparator: Function) {
+    var heap = new Heap<T>(comparator)
 
-  //   var items
+    var items
 
-  //   // If iterable is an array, we can be clever about it
-  //   if (Array.isArray(iterable)) items = iterable.slice()
-  //   else items = Array(iterable)
+    // If iterable is an array, we can be clever about it
+    if (Array.isArray(iterable)) items = iterable.slice()
+    else items = Array(iterable)
 
-  //   heapify(heap.comparator, items)
-  //   heap.items = items
-  //   heap.size = items.length
+    heapify(heap.comparator, items)
+    heap.items = items
+    heap.size = items.length
 
-  //   return heap
-  // }
+    return heap
+  }
 
   // MaxHeap.from = function (iterable, comparator) {
   //   var heap = new MaxHeap(comparator)
