@@ -7,7 +7,7 @@ import {
   bench,
   Logger,
   product,
-  combinations,
+  pairs,
 } from '../helpers/index.mjs'
 import { Heap } from '../helpers/binary-heap.mjs'
 
@@ -28,7 +28,7 @@ const part1 = (path: string, maxConnections: number): string | number => {
     dist: number
   }>((a: { dist: number }, b: { dist: number }) => b.dist - a.dist)
 
-  combinations(nodes).forEach(({ a, b }) => rects.push({ a, b, dist: rectArea(a, b) }))
+  pairs(nodes).forEach(({ a, b }) => rects.push({ a, b, dist: rectArea(a, b) }))
 
   return rects.pop().dist
 }
@@ -69,7 +69,7 @@ const part2 = (path: string): string | number => {
 
   verticalEdges.sort((a, b) => a.x - b.x)
 
-  const candidateRectangles = combinations(corners)
+  const candidateRectangles = pairs(corners)
 
   // const pointOnEdge = (point: Node): boolean => edges.has(`${point.x},${point.y}`)
 

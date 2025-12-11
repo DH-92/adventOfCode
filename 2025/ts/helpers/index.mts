@@ -153,6 +153,58 @@ function quadraticSolver(a: number, b: number, c: number) {
   return [(-b + inner) / 2 / a, (-b - inner) / 2 / a]
 }
 
+// export const combinations = <T extends unknown>(arr: T[]): { a: T; b: T }[] => {
+//   const result: { a: T; b: T }[] = []
+//   for (let i = 0; i < arr.length; i++) {
+//     for (let j = i + 1; j < arr.length; j++) {
+//       result.push({ a: arr[i], b: arr[j] })
+//     }
+//   }
+//   return result 
+// }
+
+export const pairs = <T extends unknown>(arr: T[]): { a: T; b: T }[] => {
+  return arr.reduce((acc, val, idx) => {
+    const combos = arr.slice(idx + 1).map(v => ({ a: val, b: v }))
+    acc.push(...combos)
+    return acc
+  }, [] as { a: T; b: T }[])
+}
+
+export const combinations = <T extends unknown>(arr: T[], depth: number = 2) => {
+  const result: T[][] = []
+  const combine = (start: number, combo: T[]) => {
+    if (combo.length === depth) {
+      result.push([...combo])
+      return
+    }
+    for (let i = start; i < arr.length; i++) {
+      combo.push(arr[i])
+      combine(i + 1, combo)
+      combo.pop()
+    }
+  }
+  combine(0, [])
+  return result
+}
+
+export const combinationsRepeating = <T extends unknown>(arr: T[], depth: number = 2) => {
+  const result: T[][] = []
+  const combine = (start: number, combo: T[]) => {
+    if (combo.length === depth) {
+      result.push([...combo])
+      return
+    }
+    for (let i = start; i < arr.length; i++) {
+      combo.push(arr[i])
+      combine(0, combo)
+      combo.pop()
+    }
+  }
+  combine(0, [])
+  return result
+}
+
 export const gcd = (a, b) => (!b ? a : gcd(b, a % b))
 export const lcm = (a, b) => (a * b) / gcd(a, b)
 export const lcmA = arr => arr.reduce(lcm, 1)

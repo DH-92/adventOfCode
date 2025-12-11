@@ -7,7 +7,7 @@ import {
   bench,
   Logger,
   product,
-  combinations,
+  pairs,
 } from '../helpers/index.mjs'
 import { Heap } from '../helpers/binary-heap.mjs'
 
@@ -112,7 +112,7 @@ const part2 = (path: string): string | number => {
 
   // all possible connection combinations between nodes, sorted by distance
   const connections = new Heap<Connection>((a, b) => nodeDist(a) - nodeDist(b))
-  connections.fromArray(combinations(nodes))
+  connections.fromArray(pairs(nodes))
 
   // a circuit is a set of junction box nodes that are all connected
   const circuits: Set<Set<Node>> = new Set()
